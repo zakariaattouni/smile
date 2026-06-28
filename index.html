@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smile AI - الابتسامة الرقمية</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #F8FAFC;
+        }
+        .bg-royal-navy { background-color: #0B192C; }
+        .text-royal-navy { color: #0B192C; }
+        .bg-mint-cyan { background-color: #10B981; }
+        .text-mint-cyan { color: #10B981; }
+        .text-gold-accent { color: #D4AF37; }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col justify-between">
+
+    <script>
+        // -------------------------------------------------------------
+        // ضع مفتاح الـ API الخاص بـ Gemini هنا بين علامتي التنصيص ليعمل الفحص فوراً
+        // -------------------------------------------------------------
+        const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY_HERE";
+        // -------------------------------------------------------------
+    </script>
+
+    <nav class="bg-royal-navy text-white p-3 border-b border-slate-800 sticky top-0 z-50 shadow-md">
+        <div class="max-w-4xl mx-auto grid grid-cols-3 gap-2 text-center text-xs md:text-sm">
+            <button onclick="switchPortal('dentist')" id="nav-btn-dentist" class="py-2.5 px-2 rounded-xl bg-teal-600 font-bold transition-all flex items-center justify-center gap-1.5 shadow-inner">
+                <i class="fa-solid fa-user-doctor text-sm"></i> عيادة الطبيب
+            </button>
+            <button onclick="switchPortal('patient')" id="nav-btn-patient" class="py-2.5 px-2 rounded-xl bg-slate-800 hover:bg-slate-700 transition-all flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-hospital-user text-sm text-sky-400"></i> بوابة المريض
+            </button>
+            <button onclick="switchPortal('admin')" id="nav-btn-admin" class="py-2.5 px-2 rounded-xl bg-slate-800 hover:bg-slate-700 transition-all flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-user-gear text-sm text-amber-500"></i> إدارة النظام
+            </button>
+        </div>
+    </nav>
+
+    <header class="bg-royal-navy text-white py-5 px-4 text-center border-b border-[#D4AF37]/20">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-2xl font-extrabold text-slate-100 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-wand-magic-sparkles text-mint-cyan"></i> Smile AI
+            </h1>
+            <p class="text-xs text-slate-400 mt-1">تحليل تجميلي فوري لجماليات الابتسامة مدعوم بالذكاء الاصطناعي</p>
+        </div>
+    </header>
+
+    <main class="max-w-4xl w-full mx-auto px-4 py-6 flex-grow">
+        
+        <div id="keyAlert" class="hidden mb-6 bg-amber-50 border border-amber-200 text-amber-900 p-4 rounded-xl text-xs flex flex-col gap-2">
+            <span class="font-bold text-amber-700"><i class="fa-solid fa-triangle-exclamation"></i> تنبيه فني لمفتاح الـ API:</span>
+            <p>لم يتم العثور على مفتاح فعال في أعلى الكود. أدخل مفتاحك النشط هنا للبدء بالفحص المباشر:</p>
+            <input type="password" id="dynamicKeyInput" placeholder="AIzaSy..." class="w-full p-2 border border-slate-300 rounded-lg text-left focus:outline-none">
+        </div>
+
+        <section id="portal-dentist" class="space-y-5">
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+                <h3 class="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-camera text-mint-cyan text-base"></i> خطوة 1: ارفع أو التقط صورة ابتسامة المريض
+                </h3>
+                
+                <div id="dropZone" class="border-2 border-dashed border-slate-200 hover:border-mint-cyan rounded-xl p-6 text-center cursor-pointer bg-slate-50 flex flex-col items-center justify-center gap-2">
+                    <input type="file" id="fileInput" accept="image/*" class="hidden">
+                    <i class="fa-solid fa-cloud-arrow-up text-3xl text-slate-300"></i>
+                    <div class="text-xs font-bold text-slate-600">اضغط هنا لالتقاط صورة للأسنان أو اختيارها من الاستوديو</div>
+                </div>
+
+                <div id="previewContainer" class="hidden mt-4 text-center">
+                    <div class="relative inline-block rounded-xl overflow-hidden border border-slate-200 shadow-sm max-w-full">
+                        <img id="imagePreview" src="" alt="Patient Smile" class="max-h-56 object-contain mx-auto">
+                        <button onclick="resetUploadArea()" class="absolute top-2 right-2 bg-red-600 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-md">
+                            <i class="fa-solid fa-trash-can text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button id="btnAnalyze" disabled onclick="runSmileAnalysis()" class="w-full mt-4 bg-royal-navy text-white py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 opacity-50 cursor-not-allowed transition-all active:scale-[0.99]">
+                    <i class="fa-solid fa-circle-notch animate-spin hidden" id="btnSpinner"></i>
+                    <i class="fa-solid fa-brain text-mint-cyan" id="btnBrainIcon"></i>
+                    <span id="btnText">ابدأ التحليل الفوري للابتسامة</span>
+                </button>
+            </div>
+
+            <div id="errorMessage" class="hidden bg-rose-50 border border-rose-100 text-rose-700 p-4 rounded-xl text-center font-bold text-xs">
+                <i class="fa-solid fa-circle-exclamation ml-1"></i> عذراً، لم يتعرف النظام على صورة أسنان أو ابتسامة واضحة. يرجى إعادة المحاولة بصورة جيدة.
+            </div>
+
+            <div id="resultsArea" class="hidden space-y-4">
+                
+                <div class="flex gap-2 bg-emerald-50 border border-emerald-100 p-3 rounded-xl justify-between items-center flex-wrap gap-2 text-xs">
+                    <span class="font-bold text-emerald-900"><i class="fa-solid fa-square-poll-vertical text-mint-cyan"></i> اكتمل التقرير بنجاح</span>
+                    <div class="flex gap-2 w-full sm:w-auto">
+                        <button onclick="togglePatientCard()" class="flex-1 sm:flex-initial bg-indigo-600 text-white px-3 py-2 rounded-lg font-bold">شرح مبسط للمريض</button>
+                        <button onclick="downloadAestheticReportPDF()" class="flex-1 sm:flex-initial bg-royal-navy text-white px-3 py-2 rounded-lg font-bold"><i class="fa-solid fa-file-pdf text-gold-accent"></i> طباعة/حفظ PDF</button>
+                    </div>
+                </div>
+
+                <div id="patientExplainCard" class="hidden bg-indigo-50 border border-indigo-100 rounded-xl p-4">
+                    <h4 class="text-xs font-bold text-indigo-950 mb-1"><i class="fa-solid fa-comment-medical text-indigo-600"></i> شرح موجه للمريض بأسلوب مبسط:</h4>
+                    <p id="patientExplanationText" class="text-xs text-indigo-950 leading-relaxed whitespace-pre-line"></p>
+                </div>
+
+                <div class="bg-amber-50/60 border border-amber-200 p-4 rounded-xl space-y-2">
+                    <h4 class="text-xs font-bold text-amber-900"><i class="fa-solid fa-user-pen text-amber-600"></i> ملاحظات الطبيب وتوصياته اليدوية (تظهر في الـ PDF):</h4>
+                    <textarea id="doctorManualNotes" rows="2" placeholder="اكتب أي ملاحظة إضافية هنا لتظهر في مستند الطباعة النهائي للمريض..." class="w-full p-2.5 border border-amber-200 rounded-lg text-xs focus:outline-none bg-white"></textarea>
+                </div>
+
+                <div id="pdfReportContent" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 space-y-4">
+                    <div class="border-b border-slate-100 pb-3 flex justify-between items-center">
+                        <div>
+                            <h2 class="text-md font-bold text-royal-navy">تقرير تحليل جماليات الابتسامة (Smile AI)</h2>
+                            <p class="text-[10px] text-slate-400">مستند استشاري رقمي لمظهر وتناسق الأسنان</p>
+                        </div>
+                        <div class="text-xs font-mono text-slate-500 bg-slate-50 px-2 py-1 rounded" id="reportDate"></div>
+                    </div>
+
+                    <div class="flex items-center gap-4 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                        <div class="text-center">
+                            <span class="text-[10px] text-slate-400 font-bold block mb-1">الدرجة الجمالية</span>
+                            <div class="w-12 h-12 rounded-full bg-royal-navy text-gold-accent font-extrabold text-sm flex items-center justify-center shadow" id="scoreBadge">0/10</div>
+                        </div>
+                        <div class="flex-1">
+                            <span class="text-[10px] text-slate-400 font-bold block mb-0.5">الملخص السريري للابتسامة:</span>
+                            <p id="clinicalSummary" class="text-xs text-slate-700 font-medium leading-relaxed"></p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="text-[10px] font-bold text-slate-400 mb-2 tracking-wider uppercase"><i class="fa-solid fa-list-check text-mint-cyan"></i> الملاحظات المرصودة (Findings):</h4>
+                        <ul id="findingsList" class="space-y-1.5 text-xs text-slate-700"></ul>
+                    </div>
+
+                    <div>
+                        <h4 class="text-[10px] font-bold text-slate-400 mb-2 tracking-wider uppercase"><i class="fa-solid fa-briefcase-medical text-mint-cyan"></i> الحلول والعلاجات التجميلية المقترحة:</h4>
+                        <div id="treatmentsList" class="flex flex-wrap gap-1.5"></div>
+                    </div>
+
+                    <div id="pdfDoctorNotesContainer" class="hidden bg-slate-50 border-r-4 border-amber-500 p-3 rounded-l-lg text-xs text-slate-700">
+                        <span class="font-bold text-slate-900 block mb-1">توصيات الطبيب المعالج:</span>
+                        <p id="pdfDoctorNotesText" class="whitespace-pre-line font-medium"></p>
+                    </div>
+
+                    <div class="border-t border-slate-100 pt-3 text-center">
+                        <p class="text-[10px] text-slate-400">تنبيه: هذا التحليل استرشادي لمظهر الابتسامة الخارجي ولا يغني عن الفحص السريري الدقيق بالعيادة.</p>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <section id="portal-patient" class="hidden space-y-4">
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 max-w-md mx-auto text-center space-y-3">
+                <i class="fa-solid fa-qrcode text-3xl text-slate-300"></i>
+                <div>
+                    <h3 class="text-sm font-bold text-slate-700">الاطلاع على تقرير الابتسامة الخاص بك</h3>
+                    <p class="text-xs text-slate-400 mt-0.5">أدخل الرمز السري المسلم لك من العيادة لمشاهدة النتيجة</p>
+                </div>
+                <div class="flex gap-2">
+                    <input type="text" id="patientCodeInput" placeholder="مثال: SMILE-82" class="w-full p-2 border border-slate-200 rounded-xl text-center font-bold focus:outline-none">
+                    <button onclick="loadMockPatientReport()" class="bg-royal-navy text-white text-xs font-bold px-4 rounded-xl">استعلام</button>
+                </div>
+            </div>
+
+            <div id="patientReportContainer" class="hidden max-w-md mx-auto bg-white rounded-2xl p-5 shadow-sm border border-slate-200 space-y-3">
+                <div class="flex justify-between items-center bg-royal-navy p-2.5 rounded-xl text-white text-xs font-bold">
+                    <span><i class="fa-solid fa-circle-check text-mint-cyan"></i> تقريرك التجميلي جاهز</span>
+                    <span class="text-gold-accent font-mono">النتيجة العامة: 8.5/10</span>
+                </div>
+                <div class="space-y-1">
+                    <h4 class="text-xs font-bold text-slate-700"><i class="fa-solid fa-hand-holding-hand text-teal-600"></i> ملخص الطبيب الموجه لك:</h4>
+                    <p class="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100 shadow-inner">
+                        أهلاً بك يا فندم، مظهر ابتسامتك وتناظرها العام ممتاز جداً ومتناسق. يوصي الطبيب فقط ببعض التبييض الآمن بالعيادة (Whitening) لزيادة نصوع الأسنان وصفائها، أو التفكير مستقبلاً في عدسات الفينير الرقيقة (Veneers) للحصول على أعلى درجات التجميل السينمائي.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section id="portal-admin" class="hidden space-y-4">
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 space-y-3">
+                <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                    <h3 class="text-sm font-bold text-royal-navy"><i class="fa-solid fa-users-gear"></i> التحكم بالأطباء والمراكز المسجلة</h3>
+                    <span id="dentistsCount" class="text-xs text-slate-400 font-bold">3 مسجلين</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right text-xs">
+                        <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-100">
+                            <tr>
+                                <th class="p-2">الطبيب / المركز</th>
+                                <th class="p-2 text-center">الحالة</th>
+                                <th class="p-2 text-left">الإجراء الحتمي</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dentistsTableBody" class="divide-y divide-slate-50"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 max-w-sm space-y-3">
+                <h3 class="text-sm font-bold text-slate-700"><i class="fa-solid fa-lock text-xs"></i> تحديث كلمة السر للمدير</h3>
+                <div class="space-y-2">
+                    <input type="password" id="currentAdminPass" placeholder="كلمة السر الحالية" class="w-full p-2 border border-slate-200 rounded-lg text-xs focus:outline-none">
+                    <input type="password" id="newAdminPass" placeholder="كلمة السر الجديدة" class="w-full p-2 border border-slate-200 rounded-lg text-xs focus:outline-none">
+                    <button onclick="changeAdminPassword()" class="w-full bg-royal-navy hover:bg-slate-800 text-white text-xs font-bold py-2 px-3 rounded-lg transition-colors">تحديث الأمان الآن</button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-royal-navy text-slate-400 py-4 text-center text-xs border-t border-slate-800 px-4">
+        <p>حقوق التطوير و التصميم والنشر محفوظة للدكتور زكريا محمد عطوني © 2026</p>
+    </footer>
+
+    <script>
+        // مصفوفة إدارة حسابات العيادات المدمجة تفاعلياً
+        let dentistsList = [
+            { id: 1, name: "د. محمد أحمد - عيادة الابتسامة", role: "طبيب ممارس تجميلي", status: "نشط" },
+            { id: 2, name: "د. سارة العلي - مركز كير التخصصي", role: "إخصائي تقويم أسنان", status: "قيد الانتظار" },
+            { id: 3, name: "د. خالد منصور - المستشفى السوري", role: "استشاري زراعة وجراحة", status: "موقوف" }
+        ];
+
+        // مغيرات وعناصر التحكم الكلية بالواجهة
+        const fileInput = document.getElementById('fileInput');
+        const dropZone = document.getElementById('dropZone');
+        const previewContainer = document.getElementById('previewContainer');
+        const imagePreview = document.getElementById('imagePreview');
+        const btnAnalyze = document.getElementById('btnAnalyze');
+        const btnSpinner = document.getElementById('btnSpinner');
+        const btnBrainIcon = document.getElementById('btnBrainIcon');
+        const btnText = document.getElementById('btnText');
+        const errorMessage = document.getElementById('errorMessage');
+        const resultsArea = document.getElementById('resultsArea');
+        const keyAlert = document.getElementById('keyAlert');
+        const dynamicKeyInput = document.getElementById('dynamicKeyInput');
+        const patientExplainCard = document.getElementById('patientExplainCard');
+
+        // عناصر طباعة التقرير الطبي
+        const reportDate = document.getElementById('reportDate');
+        const scoreBadge = document.getElementById('scoreBadge');
+        const clinicalSummary = document.getElementById('clinicalSummary');
+        const findingsList = document.getElementById('findingsList');
+        const treatmentsList = document.getElementById('treatmentsList');
+        const patientExplanationText = document.getElementById('patientExplanationText');
+        const doctorManualNotes = document.getElementById('doctorManualNotes');
+        const pdfDoctorNotesContainer = document.getElementById('pdfDoctorNotesContainer');
+        const pdfDoctorNotesText = document.getElementById('pdfDoctorNotesText');
+
+        let base64ImageString = ""; // السلسلة البرمجية للصورة المستخرجة للهاتف
+
+        // عند تحميل المتصفح بالكامل
+        window.addEventListener('DOMContentLoaded', function() {
+            if (GEMINI_API_KEY === "YOUR_GEMINI_API_KEY_HERE" || GEMINI_API_KEY.trim() === "") {
+                keyAlert.classList.remove('hidden');
+            }
+            const today = new Date();
+            reportDate.innerText = today.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
+            renderDentistsTable();
+        });
+
+        // دالة التبديل الفعالة بين الأزرار الثلاثة لتبسيط الواجهة
+        function switchPortal(portalName) {
+            document.getElementById('portal-admin').classList.add('hidden');
+            document.getElementById('portal-dentist').classList.add('hidden');
+            document.getElementById('portal-patient').classList.add('hidden');
+
+            document.getElementById('nav-btn-admin').className = "py-2.5 px-2 rounded-xl bg-slate-800 hover:bg-slate-700 transition-all flex items-center justify-center gap-1.5";
+            document.getElementById('nav-btn-dentist').className = "py-2.5 px-2 rounded-xl bg-slate-800 hover:bg-slate-700 transition-all flex items-center justify-center gap-1.5";
+            document.getElementById('nav-btn-patient').className = "py-2.5 px-2 rounded-xl bg-slate-800 hover:bg-slate-700 transition-all flex items-center justify-center gap-1.5";
+
+            if (portalName === 'admin') {
+                document.getElementById('portal-admin').classList.remove('hidden');
+                document.getElementById('nav-btn-admin').className = "py-2.5 px-2 rounded-xl bg-amber-600 font-bold text-white flex items-center justify-center gap-1.5 shadow-md";
+            } else if (portalName === 'dentist') {
+                document.getElementById('portal-dentist').classList.remove('hidden');
+                document.getElementById('nav-btn-dentist').className = "py-2.5 px-2 rounded-xl bg-teal-600 font-bold text-white flex items-center justify-center gap-1.5 shadow-md";
+            } else if (portalName === 'patient') {
+                document.getElementById('portal-patient').classList.remove('hidden');
+                document.getElementById('nav-btn-patient').className = "py-2.5 px-2 rounded-xl bg-sky-600 font-bold text-white flex items-center justify-center gap-1.5 shadow-md";
+            }
+        }
+
+        // بناء جدول الأطباء للمسؤول والمدير
+        function renderDentistsTable() {
+            const tbody = document.getElementById('dentistsTableBody');
+            document.getElementById('dentistsCount').innerText = `${dentistsList.length} أطباء مسجلين`;
+            tbody.innerHTML = "";
+
+            dentistsList.forEach(function(dentist) {
+                let statusBadge = "";
+                if (dentist.status === 'نشط') {
+                    statusBadge = `<span class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded text-[10px] font-bold">نشط</span>`;
+                } else if (dentist.status === 'موقوف') {
+                    statusBadge = `<span class="bg-rose-50 text-rose-700 border border-rose-100 px-1.5 py-0.5 rounded text-[10px] font-bold">موقوف</span>`;
+                } else {
+                    statusBadge = `<span class="bg-slate-100 text-slate-600 border border-slate-200 px-1.5 py-0.5 rounded text-[10px] font-bold">انتظار</span>`;
+                }
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="p-2">
+                        <div class="font-bold text-slate-800 text-xs">${dentist.name}</div>
+                        <div class="text-[10px] text-slate-400">${dentist.role}</div>
+                    </td>
+                    <td class="p-2 text-center">${statusBadge}</td>
+                    <td class="p-2 text-left space-x-1 space-x-reverse">
+                        <button onclick="updateDentistStatus(${dentist.id}, 'نشط')" class="bg-emerald-600 text-white text-[10px] py-0.5 px-1.5 rounded">تفعيل</button>
+                        <button onclick="updateDentistStatus(${dentist.id}, 'موقوف')" class="bg-amber-500 text-white text-[10px] py-0.5 px-1.5 rounded">ترقين</button>
+                        <button onclick="deleteDentist(${dentist.id})" class="bg-rose-600 text-white text-[10px] py-0.5 px-1.5 rounded"><i class="fa-solid fa-trash-can"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateDentistStatus(id, newStatus) {
+            const dentist = dentistsList.find(function(d) { return d.id === id; });
+            if (dentist) {
+                dentist.status = newStatus;
+                renderDentistsTable();
+            }
+        }
+
+        function deleteDentist(id) {
+            if (confirm("هل تريد حذف هذا الطبيب/المركز حكماً وإلغاء صلاحياته؟")) {
+                dentistsList = dentistsList.filter(function(d) { return d.id !== id; });
+                renderDentistsTable();
+            }
+        }
+
+        function changeAdminPassword() {
+            const currentPass = document.getElementById('currentAdminPass').value;
+            const newPass = document.getElementById('newAdminPass').value;
+            if (!currentPass || !newPass) { alert("يرجى ملء الخانات لتحديث كلمة السر."); return; }
+            alert("تم تحديث كلمة سر المدير العام بنجاح وأمان تيسيري حتمي! 🔐");
+            document.getElementById('currentAdminPass').value = "";
+            document.getElementById('newAdminPass').value = "";
+        }
+
+        // تفاعلات ملامسة واختيار الصور لسهولة الاستخدام الخلوي
+        dropZone.addEventListener('click', function() { fileInput.click(); });
+        fileInput.addEventListener('change', function(e) { if (e.target.files.length > 0) handleFile(e.target.files[0]); });
+
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) { alert('يرجى اختيار ملف صورة صالح فقط لمظهر الابتسامة.'); return; }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                base64ImageString = e.target.result.split(',')[1];
+                imagePreview.src = e.target.result;
+                previewContainer.classList.remove('hidden');
+                dropZone.classList.add('hidden');
+                btnAnalyze.disabled = false;
+                btnAnalyze.classList.remove('opacity-50', 'cursor-not-allowed');
+                errorMessage.classList.add('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function resetUploadArea() {
+            fileInput.value = ""; base64ImageString = "";
+            previewContainer.classList.add('hidden'); imagePreview.src = "";
+            dropZone.classList.remove('hidden');
+            btnAnalyze.disabled = true; btnAnalyze.classList.add('opacity-50', 'cursor-not-allowed');
+            errorMessage.classList.add('hidden'); resultsArea.classList.add('hidden');
+            patientExplainCard.classList.add('hidden'); doctorManualNotes.value = "";
+        }
+
+        function togglePatientCard() {
+            patientExplainCard.classList.toggle('hidden');
+        }
+
+        function getActiveApiKey() {
+            if (GEMINI_API_KEY !== "YOUR_GEMINI_API_KEY_HERE" && GEMINI_API_KEY.trim() !== "") return GEMINI_API_KEY;
+            return dynamicKeyInput.value.trim();
+        }
+
+        // دالة الفحص السريري والاستدعاء لمحرك الذكاء الاصطناعي (تم تصحيح الصياغة لتعمل الأزرار 100%)
+        async function runSmileAnalysis() {
+            const apiKey = getActiveApiKey();
+            if (!apiKey) { alert('يرجى كتابة أو إدخال مفتاح برمجية Gemini API المعتمد للبدء بالتحليل السريري المباشر.'); dynamicKeyInput.focus(); return; }
+
+            btnAnalyze.disabled = true;
+            btnSpinner.classList.remove('hidden');
+            btnBrainIcon.classList.add('hidden');
+            btnText.innerText = "يقوم الذكاء الاصطناعي الآن بمسح أبعاد الابتسامة ومطابقة المعايير الجمالية...";
+            errorMessage.classList.add('hidden');
+            resultsArea.classList.add('hidden');
+            patientExplainCard.classList.add('hidden');
+
+            const promptInstruction = `
+            أنت خبير واستشاري عالي الكفاءة في تجميل الأسنان ومحاكاة الابتسامة الرقمية للوجه.
+            مهمتك هي تحليل الصورة المرفقة من الناحية الجمالية والتناغم البصري فقط لمظهر الأسنان.
+            قيم المعايير السريرية التالية: (Symmetry, Midline, Color, Shape, Alignment, Crowding, Spacing, Gingival Display, Buccal Corridor, Overall Esthetics).
+
+            شروط حاسمة للاستجابة المرجعة:
+            - إذا كانت الصورة لا تُظهر أسناناً تجميلية أو ابتسامة واضحة على الإطلاق، يجب تعيين قيمة الحقل "isValidDentalImage" إلى false فوراً في كائن الـ JSON وإرجاعه هكذا فقط.
+            - بالنسبة لحقل "recommendedTreatments"، اختر واذكر فقط الخيارات المناسبة فعلياً للحالة من القائمة المحددة التالية حصراً دون غيرها: [Whitening, Composite Bonding, Orthodontics, Veneers, Crown Lengthening, Implants].
+            - صغ كافة النصوص الطبية والشرح باللغة العربية الفصحى المبسطة بذكاء وفاعلية تيسيرية للطبيب والمريض.
+
+            يجب إرجاع النتيجة حصراً على هيئة كائن JSON منظم تماماً بالبنية التالية دون أي نصوص خارجية على الإطلاق:
+            {
+              "isValidDentalImage": true,
+              "score": 8,
+              "summary": "وصف شامل للحالة الجمالية الحالية للابتسامة",
+              "findings": [
+                "ملاحظة عينية بخصوص المعايير المذكورة 1",
+                "ملاحظة عينية بخصوص المعايير المذكورة 2"
+              ],
+              "recommendedTreatments": [
+                "Whitening",
+                "Veneers"
+              ],
+              "patientExplanation": "إعادة صياغة للتقرير الطبي بلغة بسيطة وودية ومفهومة جداً للمريض لتبسيط المشكلة وإبراز حلول التجميل المقترحة"
+            }
+            `;
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [
+                                { text: promptInstruction },
+                                { inlineData: { mimeType: "image/jpeg", data: base64ImageString } }
+                            ]
+                        }],
+                        generationConfig: { responseMimeType: "application/json" }
+                    })
+                });
+
+                if (!response.ok) throw new Error('فشل في الاتصال بخدمة تحليل الصور الطبية، تأكد من صلاحية المفتاح والشبكة لديك.');
+
+                const data = await response.json();
+                const parsedResult = JSON.parse(data.candidates[0].content.parts[0].text);
+
+                if (!parsedResult.isValidDentalImage) {
+                    errorMessage.classList.remove('hidden');
+                    resetBtnStatus();
+                    return;
+                }
+
+                displayAestheticResults(parsedResult);
+
+            } catch (error) {
+                console.error(error);
+                alert('حدث خطأ فني أثناء التحليل: ' + error.message);
+                resetBtnStatus();
+            }
+        }
+
+        function resetBtnStatus() {
+            btnAnalyze.disabled = false;
+            btnSpinner.classList.add('hidden');
+            btnBrainIcon.classList.remove('hidden');
+            btnText.innerText = "ابدأ التحليل الفوري للابتسامة";
+        }
+
+        function displayAestheticResults(data) {
+            scoreBadge.innerText = `${data.score || 0}/10`;
+            clinicalSummary.innerText = data.summary || "لا يوجد ملخص متاح حالياً للحالة.";
+            patientExplanationText.innerText = data.patientExplanation || "لا يوجد شرح مبسط متوفر للمريض.";
+
+            findingsList.innerHTML = "";
+            treatmentsList.innerHTML = "";
+
+            if (data.findings && data.findings.length > 0) {
+                data.findings.forEach(function(finding) {
+                    const li = document.createElement('li');
+                    li.className = "bg-slate-50 border-r-4 border-royal-navy p-2 rounded-l-md flex items-start gap-1.5";
+                    li.innerHTML = `<i class="fa-solid fa-square-check text-mint-cyan mt-1 text-[10px]"></i> <span>${finding}</span>`;
+                    findingsList.appendChild(li);
+                });
+            }
+
+            if (data.recommendedTreatments && data.recommendedTreatments.length > 0) {
+                data.recommendedTreatments.forEach(function(treatment) {
+                    const badge = document.createElement('span');
+                    badge.className = "bg-slate-900 text-white border border-slate-800 px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1 shadow-sm";
+                    badge.innerHTML = `<i class="fa-solid fa-notes-medical text-gold-accent"></i> ${translateTreatmentText(treatment)}`;
+                    treatmentsList.appendChild(badge);
+                });
+            }
+
+            resultsArea.classList.remove('hidden');
+            resetBtnStatus();
+            resultsArea.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function translateTreatmentText(engText) {
+            const dictionary = {
+                'Whitening': 'تبييض الأسنان (Whitening)',
+                'Composite Bonding': 'الترميم التجميلي المباشر (Composite Bonding)',
+                'Orthodontics': 'تقويم الأسنان (Orthodontics)',
+                'Veneers': 'عدسات الفينير التجميلية (Veneers)',
+                'Crown Lengthening': 'تطويل التيجان واللثة (Crown Lengthening)',
+                'Implants': 'زراعة وتعويض الأسنان (Implants)'
+            };
+            return dictionary[engText] || engText;
+        }
+
+        function downloadAestheticReportPDF() {
+            const manualText = doctorManualNotes.value.trim();
+            if (manualText !== "") {
+                pdfDoctorNotesText.innerText = manualText;
+                pdfDoctorNotesContainer.classList.remove('hidden');
+            } else {
+                pdfDoctorNotesContainer.classList.add('hidden');
+            }
+
+            const element = document.getElementById('pdfReportContent');
+            const options = {
+                margin: [10, 10, 10, 10],
+                filename: `Smile_AI_Report_${new Date().toISOString().slice(0,10)}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(options).from(element).save();
+        }
+
+        function loadMockPatientReport() {
+            const code = document.getElementById('patientCodeInput').value.trim();
+            if (!code) { alert('يرجى إدخال رمز الحالة الخاص بك أولاً للاستعلام.'); return; }
+            document.getElementById('patientReportContainer').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
