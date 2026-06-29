@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smile AI - الابتسامة الرقمية</title>
+    
+    <!-- تهيئة التثبيت التلقائي وتحديد هوية التطبيق على الهاتف (PWA Manifest via Data URI) -->
+    <link rel="manifest" href='data:application/json,{"name":"Smile AI","short_name":"SmileAI","start_url":".","display":"standalone","background_color":"#0B192C","theme_color":"#0B192C","icons":[{"src":"data:image/svg+xml;utf8,<svg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27 fill=%27%230B192C%27><rect width=%27100%27 height=%27100%27 rx=%2720%27/><path d=%27M25 50 Q50 80 75 50%27 stroke=%27%2310B981%27 stroke-width=%276%27 fill=%27none%27 stroke-linecap=%27round%27/><path d=%27M65 20 Q70 30 80 35 Q70 40 65 50 Q60 40 50 35 Q60 30 65 20%27 fill=%27%23D4AF37%27/></svg>","sizes":"192x192","type":"image/svg+xml"}]}'>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="#0B192C">
+    <meta name="apple-mobile-web-app-title" content="Smile AI">
+
     <!-- Tailwind CSS للواجهات السريعة والمتجاوبة بالكامل مع الهواتف -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- خط كايرو المتميز للمنصات الطبية -->
@@ -23,9 +30,10 @@
         .bg-mint-cyan { background-color: #10B981; }
         .text-mint-cyan { color: #10B981; }
         .text-gold-accent { color: #D4AF37; }
+        .bg-gold-accent { background-color: #D4AF37; }
     </style>
 </head>
-<body class="text-slate-800 min-h-screen flex flex-col justify-between">
+<body class="text-slate-800 min-h-screen flex flex-col justify-between pb-20 md:pb-0">
 
     <!-- أزرار الدخول الثلاثية المبسطة - مريحة جداً للتنقل من الهاتف -->
     <nav class="bg-royal-navy text-white p-3 border-b border-slate-800 sticky top-0 z-50 shadow-md">
@@ -42,11 +50,18 @@
         </div>
     </nav>
 
-    <!-- الهيدر العام للهوية البصرية -->
+    <!-- الهيدر العام للهوية البصرية ويحتوي على أيقونة البريق الجديدة -->
     <header class="bg-royal-navy text-white py-5 px-4 text-center border-b border-[#D4AF37]/20">
-        <div class="max-w-4xl mx-auto">
+        <div class="max-w-4xl mx-auto flex flex-col items-center justify-center">
+            <!-- أيقونة الابتسامة التجميلية مع البريق المتلألئ -->
+            <div class="w-16 h-16 mb-2 bg-slate-800/40 rounded-2xl border border-slate-700 flex items-center justify-center relative shadow-inner">
+                <svg class="w-12 h-12" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M25 50 Q50 85 75 50" stroke="#10B981" stroke-width="7" stroke-linecap="round"/>
+                    <path d="M68 18 Q73 28 83 33 Q73 38 68 48 Q63 38 53 33 Q63 28 68 18" fill="#D4AF37"/>
+                </svg>
+            </div>
             <h1 class="text-2xl font-extrabold text-slate-100 flex items-center justify-center gap-2">
-                <i class="fa-solid fa-wand-magic-sparkles text-mint-cyan"></i> Smile AI
+                Smile AI
             </h1>
             <p class="text-xs text-slate-400 mt-1">تحليل تجميلي فوري لجماليات الابتسامة مدعوم بالذكاء الاصطناعي</p>
         </div>
@@ -268,6 +283,27 @@
 
     </main>
 
+    <!-- شريط التثبيت التلقائي الانسيابي في أسفل الهاتف - ميزة PWA مخصصة ومزودة بأيقونة البريق والابتسامة -->
+    <div id="pwaInstallBanner" class="hidden fixed bottom-4 left-4 right-4 bg-slate-900 text-white p-3 rounded-2xl shadow-2xl border border-[#D4AF37]/30 flex items-center justify-between z-50 animate-bounce">
+        <div class="flex items-center gap-2.5">
+            <!-- شكل الأيقونة المصغرة بالتثبيت -->
+            <div class="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center border border-slate-700">
+                <svg class="w-7 h-7" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M25 50 Q50 85 75 50" stroke="#10B981" stroke-width="8" stroke-linecap="round"/>
+                    <path d="M68 18 Q73 28 83 33 Q73 38 68 48 fill" fill="#D4AF37"/>
+                    <path d="M68 18 Q73 28 83 33 Q73 38 68 48 Q63 38 53 33 Q63 28 68 18" fill="#D4AF37"/>
+                </svg>
+            </div>
+            <div>
+                <h4 class="text-xs font-bold text-slate-100">تثبيت Smile AI على الهاتف</h4>
+                <p class="text-[10px] text-slate-400">تصفح أسرع وفحص تجميلي فوري مباشر</p>
+            </div>
+        </div>
+        <button onclick="triggerPWAInstallation()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-1.5 px-3 rounded-xl shadow transition-all">
+            تثبيت الآن
+        </button>
+    </div>
+
     <!-- الفوتر الرسمي والشخصي المتكامل للدكتور زكريا عطوني لعام 2026 -->
     <footer class="bg-royal-navy text-slate-400 py-4 text-center text-xs border-t border-slate-800 px-4">
         <p>حقوق التطوير و التصميم والنشر محفوظة للدكتور زكريا محمد عطوني © 2026</p>
@@ -275,7 +311,6 @@
 
     <!-- السكربت البرمجي الحديث بنظام الوحدات البرمجية لتشغيل الفايربيس بكفاءة -->
     <script type="module">
-        // استدعاء حزم SDK المطلوبة من خوادم قوقل مباشرة لتحديث الواجهة سحابياً
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
         import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -299,6 +334,7 @@
         // متغير الاحتفاظ بمفتاح الذكاء الاصطناعي النشط
         let activeGeminiApiKey = "";
         let base64ImageString = ""; 
+        let deferredPrompt = null; // لميزة تثبيت التطبيق
 
         let dentistsList = [
             { id: 1, name: "د. محمد أحمد - عيادة الابتسامة", role: "طبيب ممارس تجميلي", status: "نشط" },
@@ -320,6 +356,7 @@
         const dynamicKeyInput = document.getElementById('dynamicKeyInput');
         const patientExplainCard = document.getElementById('patientExplainCard');
         const firebaseStatus = document.getElementById('firebaseStatus');
+        const pwaInstallBanner = document.getElementById('pwaInstallBanner');
 
         const reportDate = document.getElementById('reportDate');
         const scoreBadge = document.getElementById('scoreBadge');
@@ -341,12 +378,46 @@
             }
             renderDentistsTable();
             await pullGeminiKeyFromFirebase();
+            detectPWAInstallationCapability();
         });
+
+        // التقاط حدث الرغبة بالتثبيت من متصفح الهاتف (Android/Chrome)
+        function detectPWAInstallationCapability() {
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                // إظهار الشريط فوراً للمستخدم على الهاتف
+                if(pwaInstallBanner) pwaInstallBanner.classList.remove('hidden');
+            });
+
+            // دعم إرشادي خفيف لهواتف الآيفون (Safari) التي لا تدعم الحدث التلقائي
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+            if (isIOS && !isStandalone && pwaInstallBanner) {
+                pwaInstallBanner.classList.remove('hidden');
+            }
+        }
+
+        // دالة الضغط على زر التثبيت
+        function triggerPWAInstallation() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        if(pwaInstallBanner) pwaInstallBanner.classList.add('hidden');
+                    }
+                    deferredPrompt = null;
+                });
+            } else {
+                // إرشاد مستخدمي iOS أو المتصفحات البديلة
+                alert("لتثبيت التطبيق على هاتف الآيفون أو المتصفح الحالي:\n1. اضغط على زر 'مشاركة' (Share) أسفل المتصفح.\n2. اختر 'إضافة إلى الشاشة الرئيسية' (Add to Home Screen).\nوسيظهر التطبيق بأيقونة الابتسامة والبريق فوراً!");
+                if(pwaInstallBanner) pwaInstallBanner.classList.add('hidden');
+            }
+        }
 
         // دالة جلب البيانات السحابية من الفايربيس (Firestore)
         async function pullGeminiKeyFromFirebase() {
             try {
-                // محاولة القراءة من مجلد الإعدادات بوثيقة التجميل
                 const docRef = doc(db, "config", "gemini_settings");
                 const docSnap = await getDoc(docRef);
                 
@@ -359,7 +430,7 @@
                 }
             } catch (error) {
                 console.error("Firebase connection error:", error);
-                firebaseStatus.innerHTML = `<i class="fa-solid fa-cloud-bounce text-rose-400"></i> يرجى تهيئة Cloud Firestore في لوحة تحكم Firebase`;
+                firebaseStatus.innerHTML = `<i class="fa-solid fa-cloud-bounce text-rose-400"></i> يرجى فحص رولز وقواعد الفايربيس لـ Firestore`;
             }
         }
 
@@ -377,7 +448,7 @@
             } catch (error) {
                 console.error("Firebase Save Error:", error);
                 firebaseStatus.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-rose-500"></i> فشل الحفظ`;
-                alert("فشل الحفظ السحابي: يرجى فتح لوحة تحكم الـ Firebase الخاصة بك وتفعيل خيار Cloud Firestore Database وتحديث قواعد الحماية (Rules) لتسمح بالقراءة والكتابة.");
+                alert("فشل الحفظ السحابي: تأكد من تطبيق الرولز المستبدلة التي أعددناها.");
             }
         }
 
@@ -693,6 +764,7 @@
         window.deleteDentist = deleteDentist;
         window.changeAdminPassword = changeAdminPassword;
         window.saveGeminiKeyToFirebase = saveGeminiKeyToFirebase;
+        window.triggerPWAInstallation = triggerPWAInstallation;
     </script>
 </body>
 </html>
