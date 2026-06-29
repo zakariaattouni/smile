@@ -27,14 +27,6 @@
 </head>
 <body class="text-slate-800 min-h-screen flex flex-col justify-between">
 
-    <script>
-        // -------------------------------------------------------------
-        // يمكنك وضع مفتاح الـ API الافتراضي هنا أو إدخاله من غرفة الإدارة بالتطبيق مباشرة
-        // -------------------------------------------------------------
-        const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY_HERE";
-        // -------------------------------------------------------------
-    </script>
-
     <!-- أزرار الدخول الثلاثية المبسطة - مريحة جداً للتنقل من الهاتف -->
     <nav class="bg-royal-navy text-white p-3 border-b border-slate-800 sticky top-0 z-50 shadow-md">
         <div class="max-w-4xl mx-auto grid grid-cols-3 gap-2 text-center text-xs md:text-sm">
@@ -160,13 +152,13 @@
                         <div id="treatmentsList" class="flex flex-wrap gap-1.5"></div>
                     </div>
 
-                    <!-- خريطة وخطة العمل التنفيذية (ميزة جديدة) -->
+                    <!-- خريطة وخطة العمل التنفيذية -->
                     <div class="border-t border-slate-100 pt-3">
                         <h4 class="text-[11px] font-bold text-slate-500 mb-2 tracking-wider uppercase"><i class="fa-solid fa-route text-emerald-600"></i> خطة العمل المقترحة ومراحل التنفيذ (Action Plan):</h4>
                         <ol id="actionPlanList" class="space-y-1.5 text-xs text-slate-700 list-decimal list-inside pr-1"></ol>
                     </div>
 
-                    <!-- نصائح وإرشادات طبية عامة (ميزة جديدة) -->
+                    <!-- نصائح وإرشادات طبية عامة -->
                     <div class="border-t border-slate-100 pt-3">
                         <h4 class="text-[11px] font-bold text-slate-500 mb-2 tracking-wider uppercase"><i class="fa-solid fa-lightbulb text-amber-500"></i> نصائح وإرشادات طبية للمحافظة على النتيجة (Tips):</h4>
                         <ul id="tipsList" class="space-y-1.5 text-xs text-slate-700"></ul>
@@ -217,22 +209,29 @@
         </section>
 
         <!-- ========================================== -->
-        <!-- 3. واجهة إدارة النظام (غرفة الإدارة - تحتوي الآن على إعداد المفتاح) -->
+        <!-- 3. واجهة إدارة النظام (غرفة الإدارة السحابية) -->
         <!-- ========================================== -->
         <section id="portal-admin" class="hidden space-y-5">
             
-            <!-- نافذة التحكم بمفتاح الـ API - مؤقتاً هنا لحين ربط Firebase -->
-            <div class="bg-amber-50 border border-amber-200 rounded-2xl p-5 shadow-sm space-y-3">
-                <div class="flex items-center gap-2 text-amber-900">
-                    <i class="fa-solid fa-key text-base text-amber-600"></i>
-                    <h3 class="text-sm font-bold">إعدادات الاتصال والذكاء الاصطناعي (مرحلة ما قبل Firebase)</h3>
+            <!-- لوحة إعدادات المفتاح المتصلة بالفايربيس -->
+            <div class="bg-slate-900 text-white rounded-2xl p-5 shadow-sm border border-[#D4AF37]/20 space-y-3">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-cloud text-mint-cyan text-base"></i>
+                        <h3 class="text-sm font-bold text-slate-100">بوابة الإعدادات السحابية (Firebase Firestore)</h3>
+                    </div>
+                    <span id="firebaseStatus" class="text-[10px] bg-slate-800 text-slate-300 px-2.5 py-1 rounded-lg border border-slate-700 font-bold">
+                        <i class="fa-solid fa-spinner animate-spin text-amber-400"></i> جاري فحص الاتصال بالـ Cloud...
+                    </span>
                 </div>
-                <p class="text-xs text-amber-800 leading-relaxed">
-                    يا دكتور زكريا، تم نقل هذه اللوحة إلى غرفة الإدارة حمايةً لخصوصية البيانات. يرجى تزويد النظام بمفتاح الـ API النشط لـ Gemini هنا ليتمكن النظام من تشغيل الفحص والتحليل الفوري مباشرة:
+                <p class="text-xs text-slate-400 leading-relaxed">
+                    يا دكتور زكريا، يتم تخزين وحفظ مفتاح الذكاء الاصطناعي بشكل آمن وسحّابي بالكامل هنا. عند تغييره أو حفظه، سيقوم التطبيق بقراءته واستخدامه فوراً وبشكل حتمي في عيادة الطبيب:
                 </p>
-                <div class="space-y-1.5">
-                    <input type="password" id="dynamicKeyInput" placeholder="أدخل مفتاح Gemini هنا (AIzaSy...)" class="w-full p-2.5 border border-amber-300 rounded-xl text-left font-mono text-xs focus:outline-none bg-white shadow-inner">
-                    <p class="text-[10px] text-slate-400"><i class="fa-solid fa-info-circle"></i> سيتم تخزين هذا المفتاح محلياً في جلسة العمل الحالية لحين إتمام بناء الفايربيس.</p>
+                <div class="space-y-2">
+                    <input type="password" id="dynamicKeyInput" placeholder="أدخل مفتاح Gemini هنا (AIzaSy...)" class="w-full p-2.5 bg-slate-800 text-left font-mono text-xs text-slate-100 border border-slate-700 rounded-xl focus:outline-none shadow-inner">
+                    <button onclick="saveGeminiKeyToFirebase()" class="w-full bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold py-2.5 px-3 rounded-xl transition-all shadow flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-floppy-disk"></i> حفظ وإرسال البيانات إلى Firebase
+                    </button>
                 </div>
             </div>
 
@@ -269,19 +268,45 @@
 
     </main>
 
-    <!-- الفوتر الرسمي للدكتور زكريا عطوني -->
+    <!-- الفوتر الرسمي والشخصي المتكامل للدكتور زكريا عطوني لعام 2026 -->
     <footer class="bg-royal-navy text-slate-400 py-4 text-center text-xs border-t border-slate-800 px-4">
         <p>حقوق التطوير و التصميم والنشر محفوظة للدكتور زكريا محمد عطوني © 2026</p>
     </footer>
 
-    <!-- السكربت البرمجي الكامل والفعال -->
-    <script>
+    <!-- السكربت البرمجي الحديث بنظام الوحدات البرمجية لتشغيل الفايربيس بكفاءة -->
+    <script type="module">
+        // استدعاء حزم SDK المطلوبة من خوادم قوقل مباشرة لتحديث الواجهة سحابياً
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // إعدادات الـ Firebase المعتمدة لـ Smile AI الخاصة بك
+        const firebaseConfig = {
+            apiKey: "AIzaSyD0NjsFn4Y3Rks91IvGNEDmnKUQeKYCB_0",
+            authDomain: "smile-b83f2.firebaseapp.com",
+            projectId: "smile-b83f2",
+            storageBucket: "smile-b83f2.firebasestorage.app",
+            messagingSenderId: "505479273277",
+            appId: "1:505479273277:web:436e900a8745b32af78354",
+            measurementId: "G-HDNTX33NQL"
+        };
+
+        // تهيئة الفايربيس وبناء الاتصال
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const db = getFirestore(app);
+
+        // متغير الاحتفاظ بمفتاح الذكاء الاصطناعي النشط
+        let activeGeminiApiKey = "";
+        let base64ImageString = ""; 
+
         let dentistsList = [
             { id: 1, name: "د. محمد أحمد - عيادة الابتسامة", role: "طبيب ممارس تجميلي", status: "نشط" },
             { id: 2, name: "د. سارة العلي - مركز كير التخصصي", role: "إخصائي تقويم أسنان", status: "قيد الانتظار" },
             { id: 3, name: "د. خالد منصور - المستشفى السوري", role: "استشاري زراعة وجراحة", status: "موقوف" }
         ];
 
+        // مراجع الواجهات البصرية
         const fileInput = document.getElementById('fileInput');
         const dropZone = document.getElementById('dropZone');
         const previewContainer = document.getElementById('previewContainer');
@@ -294,6 +319,7 @@
         const resultsArea = document.getElementById('resultsArea');
         const dynamicKeyInput = document.getElementById('dynamicKeyInput');
         const patientExplainCard = document.getElementById('patientExplainCard');
+        const firebaseStatus = document.getElementById('firebaseStatus');
 
         const reportDate = document.getElementById('reportDate');
         const scoreBadge = document.getElementById('scoreBadge');
@@ -307,13 +333,250 @@
         const pdfDoctorNotesContainer = document.getElementById('pdfDoctorNotesContainer');
         const pdfDoctorNotesText = document.getElementById('pdfDoctorNotesText');
 
-        let base64ImageString = ""; 
-
-        window.addEventListener('DOMContentLoaded', function() {
+        // جلب المفتاح المطور سحابياً فور إقلاع التطبيق لراحة المستخدم
+        window.addEventListener('DOMContentLoaded', async function() {
             const today = new Date();
-            reportDate.innerText = today.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
+            if(reportDate) {
+                reportDate.innerText = today.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
+            }
             renderDentistsTable();
+            await pullGeminiKeyFromFirebase();
         });
+
+        // دالة جلب البيانات السحابية من الفايربيس (Firestore)
+        async function pullGeminiKeyFromFirebase() {
+            try {
+                // محاولة القراءة من مجلد الإعدادات بوثيقة التجميل
+                const docRef = doc(db, "config", "gemini_settings");
+                const docSnap = await getDoc(docRef);
+                
+                if (docSnap.exists() && docSnap.data().apiKey) {
+                    activeGeminiApiKey = docSnap.data().apiKey;
+                    dynamicKeyInput.value = activeGeminiApiKey;
+                    firebaseStatus.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i> متصل بـ Firebase ومفتاح المحاكاة نشط`;
+                } else {
+                    firebaseStatus.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-amber-400"></i> متصل بـ Firebase | الحقل فارغ`;
+                }
+            } catch (error) {
+                console.error("Firebase connection error:", error);
+                firebaseStatus.innerHTML = `<i class="fa-solid fa-cloud-bounce text-rose-400"></i> يرجى تهيئة Cloud Firestore في لوحة تحكم Firebase`;
+            }
+        }
+
+        // دالة إرسال وحفظ المفتاح للفايربيس بشكل دائم وسهل
+        async function saveGeminiKeyToFirebase() {
+            const keyInputVal = dynamicKeyInput.value.trim();
+            if(!keyInputVal) { alert("يرجى كتابة أو لصق رمز المفتاح أولاً."); return; }
+            
+            try {
+                firebaseStatus.innerHTML = `<i class="fa-solid fa-arrows-spin animate-spin text-sky-400"></i> جاري الرفع للسحابة...`;
+                await setDoc(doc(db, "config", "gemini_settings"), { apiKey: keyInputVal });
+                activeGeminiApiKey = keyInputVal;
+                firebaseStatus.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i> تم الحفظ السحابي بنجاح 🚀`;
+                alert("يا دكتور زكريا، تم حفظ وتأمين مفتاح الـ API داخل قاعدة بيانات Firebase بنجاح مطلق! جاهز للاستخدام الفوري.");
+            } catch (error) {
+                console.error("Firebase Save Error:", error);
+                firebaseStatus.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-rose-500"></i> فشل الحفظ`;
+                alert("فشل الحفظ السحابي: يرجى فتح لوحة تحكم الـ Firebase الخاصة بك وتفعيل خيار Cloud Firestore Database وتحديث قواعد الحماية (Rules) لتسمح بالقراءة والكتابة.");
+            }
+        }
+
+        // دالة الفحص الطبي والتحليل عبر محرك الذكاء الاصطناعي
+        async function runSmileAnalysis() {
+            if (!activeGeminiApiKey) { 
+                alert('تنبيه فني: يرجى التوجه فوراً إلى بوابة "إدارة النظام" وتخزين مفتاح Gemini API الصالح للاتصال بالخادم السحابي.'); 
+                switchPortal('admin');
+                dynamicKeyInput.focus(); 
+                return; 
+            }
+
+            btnAnalyze.disabled = true;
+            btnSpinner.classList.remove('hidden');
+            btnBrainIcon.classList.add('hidden');
+            btnText.innerText = "يقوم الذكاء الاصطناعي بمطابقة المعايير وإعداد خطة العمل التجميلية...";
+            errorMessage.classList.add('hidden');
+            resultsArea.classList.add('hidden');
+            patientExplainCard.classList.add('hidden');
+
+            const promptInstruction = `
+            أنت خبير واستشاري عالي الكفاءة في تجميل الأسنان ومحاكاة الابتسامة الرقمية.
+            مهمتك هي تحليل الصورة المرفقة من الناحية الجمالية والتناغم البصري لمظهر الأسنان واللثة.
+            قيم المعايير السريرية التالية: (Symmetry, Midline, Color, Shape, Alignment, Crowding, Spacing, Gingival Display).
+
+            شروط حاسمة للاستجابة المرجعة:
+            - إذا كانت الصورة لا تُظهر أسناناً أو ابتسامة واضحة، اجعل "isValidDentalImage" قيمتها false في كائن الـ JSON.
+            - بالنسبة لحقل "recommendedTreatments" اختر فقط المناسب من القائمة التالية حصراً: [Whitening, Composite Bonding, Orthodontics, Veneers, Crown Lengthening, Implants].
+            - يجب أن تقدم "actionPlan" وهي خطة عمل تنفيذية مجدولة زمنياً أو مرتبة كخطوات علاجية تتابعية.
+            - يجب أن تقدم "tips" وهي نصائح طبية وإرشادات تجميلية هامة للمريض للحفاظ على صحة ابتسامته.
+
+            أرجع النتيجة حصراً على هيئة كائن JSON منظم تماماً بالبنية التالية دون أي نصوص تمهيدية أو إضافية خارج الكائن:
+            {
+              "isValidDentalImage": true,
+              "score": 8,
+              "summary": "ملخص شامل ومكثف للحالة الجمالية للابتسامة",
+              "findings": [
+                "ملاحظة عينية بخصوص اللون أو التناظر 1",
+                "ملاحظة عينية بخصوص الإطباق أو الاصطفاف 2"
+              ],
+              "recommendedTreatments": [
+                "Whitening",
+                "Veneers"
+              ],
+              "actionPlan": [
+                "الخطوة الأولى: تهيئة اللثة والتنظيف الشامل بالعيادة",
+                "الخطوة الثانية: البدء بجلسات التبييض أو التحضير للعدسات"
+              ],
+              "tips": [
+                "نصيحة بخصوص العناية اليومية ونوع الفرشاة وطريقة الاستخدام",
+                "نصيحة لتجنب المصبغات والمشروبات الداكنة كالهيل والقهوة"
+              ],
+              "patientExplanation": "إعادة صياغة ودية ومبسطة جداً ومطمئنة للمريض تشرح حالته والحلول دون مصطلحات معقدة"
+            }
+            `;
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${activeGeminiApiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [
+                                { text: promptInstruction },
+                                { inlineData: { mimeType: "image/jpeg", data: base64ImageString } }
+                            ]
+                        }],
+                        generationConfig: { responseMimeType: "application/json" }
+                    })
+                });
+
+                if (!response.ok) throw new Error('فشل اتصال الذكاء الاصطناعي. تأكد من صلاحية أو شحن مفتاح الـ API المستدعى.');
+
+                const resData = await response.json();
+                let responseText = resData.candidates[0].content.parts[0].text;
+                responseText = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
+                
+                const parsedResult = JSON.parse(responseText);
+
+                if (!parsedResult.isValidDentalImage) {
+                    errorMessage.classList.remove('hidden');
+                    resetBtnStatus();
+                    return;
+                }
+
+                displayAestheticResults(parsedResult);
+
+            } catch (error) {
+                console.error(error);
+                alert('حدث عطل فني في التحليل المعياري: ' + error.message);
+                resetBtnStatus();
+            }
+        }
+
+        function resetBtnStatus() {
+            btnAnalyze.disabled = false;
+            btnSpinner.classList.add('hidden');
+            btnBrainIcon.classList.remove('hidden');
+            btnText.innerText = "ابدأ التحليل الفوري للابتسامة";
+        }
+
+        function displayAestheticResults(data) {
+            scoreBadge.innerText = `${data.score || 0}/10`;
+            clinicalSummary.innerText = data.summary || "لا يوجد ملخص متاح حالياً للحالة.";
+            patientExplanationText.innerText = data.patientExplanation || "لا يوجد شرح مبسط متوفر للمريض.";
+
+            findingsList.innerHTML = "";
+            treatmentsList.innerHTML = "";
+            actionPlanList.innerHTML = "";
+            tipsList.innerHTML = "";
+
+            if (data.findings && data.findings.length > 0) {
+                data.findings.forEach(function(finding) {
+                    const li = document.createElement('li');
+                    li.className = "bg-slate-50 border-r-4 border-royal-navy p-2 rounded-l-md flex items-start gap-1.5 shadow-sm";
+                    li.innerHTML = `<i class="fa-solid fa-square-check text-mint-cyan mt-1 text-[10px]"></i> <span>${finding}</span>`;
+                    findingsList.appendChild(li);
+                });
+            }
+
+            if (data.recommendedTreatments && data.recommendedTreatments.length > 0) {
+                data.recommendedTreatments.forEach(function(treatment) {
+                    const badge = document.createElement('span');
+                    badge.className = "bg-slate-900 text-white border border-slate-800 px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1 shadow-sm";
+                    badge.innerHTML = `<i class="fa-solid fa-notes-medical text-gold-accent"></i> ${translateTreatmentText(treatment)}`;
+                    treatmentsList.appendChild(badge);
+                });
+            }
+
+            if (data.actionPlan && data.actionPlan.length > 0) {
+                data.actionPlan.forEach(function(step) {
+                    const li = document.createElement('li');
+                    li.className = "p-1.5 border-b border-slate-100 last:border-0";
+                    li.innerHTML = `<span>${step}</span>`;
+                    actionPlanList.appendChild(li);
+                });
+            } else {
+                actionPlanList.innerHTML = "<li class='text-slate-400'>يتم جدولة الخطة لاحقاً.</li>";
+            }
+
+            if (data.tips && data.tips.length > 0) {
+                data.tips.forEach(function(tip) {
+                    const li = document.createElement('li');
+                    li.className = "flex items-start gap-2 p-1.5 bg-amber-50/40 rounded-lg mb-1 last:mb-0 text-slate-800";
+                    li.innerHTML = `<i class="fa-solid fa-lightbulb text-amber-500 mt-1 text-xs"></i> <span>${tip}</span>`;
+                    tipsList.appendChild(li);
+                });
+            } else {
+                tipsList.innerHTML = "<li class='text-slate-400'>المضمضة والتنظيف الدوري.</li>";
+            }
+
+            resultsArea.classList.remove('hidden');
+            resetBtnStatus();
+            resultsArea.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function translateTreatmentText(engText) {
+            const dictionary = {
+                'Whitening': 'تبييض الأسنان (Whitening)',
+                'Composite Bonding': 'الترميم التجميلي المباشر (Composite Bonding)',
+                'Orthodontics': 'تقويم الأسنان (Orthodontics)',
+                'Veneers': 'عدسات الفينير التجميلية (Veneers)',
+                'Crown Lengthening': 'تطويل التيجان واللثة (Crown Lengthening)',
+                'Implants': 'زراعة وتعويض الأسنان (Implants)'
+            };
+            return dictionary[engText] || engText;
+        }
+
+        // أدوات معالجة الملفات والصور للهواتف
+        if(dropZone) {
+            dropZone.addEventListener('click', function() { fileInput.click(); });
+        }
+        if(fileInput) {
+            fileInput.addEventListener('change', function(e) { if (e.target.files.length > 0) handleFile(e.target.files[0]); });
+        }
+
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) { alert('يرجى اختيار ملف صورة مظهر الابتسامة فقط.'); return; }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                base64ImageString = e.target.result.split(',')[1];
+                imagePreview.src = e.target.result;
+                previewContainer.classList.remove('hidden');
+                dropZone.classList.add('hidden');
+                btnAnalyze.disabled = false;
+                btnAnalyze.classList.remove('opacity-50', 'cursor-not-allowed');
+                errorMessage.classList.add('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function resetUploadArea() {
+            fileInput.value = ""; base64ImageString = "";
+            previewContainer.classList.add('hidden'); imagePreview.src = "";
+            dropZone.classList.remove('hidden');
+            btnAnalyze.disabled = true; btnAnalyze.classList.add('opacity-50', 'cursor-not-allowed');
+            errorMessage.classList.add('hidden'); resultsArea.classList.add('hidden');
+            patientExplainCard.classList.add('hidden'); doctorManualNotes.value = "";
+        }
 
         function switchPortal(portalName) {
             document.getElementById('portal-admin').classList.add('hidden');
@@ -338,6 +601,7 @@
 
         function renderDentistsTable() {
             const tbody = document.getElementById('dentistsTableBody');
+            if(!tbody) return;
             document.getElementById('dentistsCount').innerText = `${dentistsList.length} أطباء مسجلين`;
             tbody.innerHTML = "";
 
@@ -389,211 +653,6 @@
             document.getElementById('newAdminPass').value = "";
         }
 
-        dropZone.addEventListener('click', function() { fileInput.click(); });
-        fileInput.addEventListener('change', function(e) { if (e.target.files.length > 0) handleFile(e.target.files[0]); });
-
-        function handleFile(file) {
-            if (!file.type.startsWith('image/')) { alert('يرجى اختيار ملف صورة صالح فقط لمظهر الابتسامة.'); return; }
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                base64ImageString = e.target.result.split(',')[1];
-                imagePreview.src = e.target.result;
-                previewContainer.classList.remove('hidden');
-                dropZone.classList.add('hidden');
-                btnAnalyze.disabled = false;
-                btnAnalyze.classList.remove('opacity-50', 'cursor-not-allowed');
-                errorMessage.classList.add('hidden');
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function resetUploadArea() {
-            fileInput.value = ""; base64ImageString = "";
-            previewContainer.classList.add('hidden'); imagePreview.src = "";
-            dropZone.classList.remove('hidden');
-            btnAnalyze.disabled = true; btnAnalyze.classList.add('opacity-50', 'cursor-not-allowed');
-            errorMessage.classList.add('hidden'); resultsArea.classList.add('hidden');
-            patientExplainCard.classList.add('hidden'); doctorManualNotes.value = "";
-        }
-
-        function togglePatientCard() { patientExplainCard.classList.toggle('hidden'); }
-
-        function getActiveApiKey() {
-            if (GEMINI_API_KEY !== "YOUR_GEMINI_API_KEY_HERE" && GEMINI_API_KEY.trim() !== "") return GEMINI_API_KEY;
-            return dynamicKeyInput.value.trim();
-        }
-
-        async function runSmileAnalysis() {
-            const apiKey = getActiveApiKey();
-            if (!apiKey) { 
-                alert('تنبيه: يرجى الذهاب أولاً إلى بوابة "إدارة النظام" وتزويد الحقل بمفتاح Gemini API صالح لبدء الفحص التجميلي الذكي.'); 
-                switchPortal('admin');
-                dynamicKeyInput.focus(); 
-                return; 
-            }
-
-            btnAnalyze.disabled = true;
-            btnSpinner.classList.remove('hidden');
-            btnBrainIcon.classList.add('hidden');
-            btnText.innerText = "يقوم الذكاء الاصطناعي بمطابقة المعايير وتحليل مظهر الأسنان خطوة بخطوة...";
-            errorMessage.classList.add('hidden');
-            resultsArea.classList.add('hidden');
-            patientExplainCard.classList.add('hidden');
-
-            const promptInstruction = `
-            أنت خبير واستشاري عالي الكفاءة في تجميل الأسنان ومحاكاة الابتسامة الرقمية.
-            مهمتك هي تحليل الصورة المرفقة من الناحية الجمالية والتناغم البصري لمظهر الأسنان واللثة.
-            قيم المعايير السريرية التالية: (Symmetry, Midline, Color, Shape, Alignment, Crowding, Spacing, Gingival Display).
-
-            شروط حاسمة للاستجابة المرجعة:
-            - إذا كانت الصورة لا تُظهر أسناناً أو ابتسامة واضحة، اجعل "isValidDentalImage" قيمتها false في كائن الـ JSON.
-            - بالنسبة لحقل "recommendedTreatments" اختر فقط المناسب من القائمة التالية حصراً: [Whitening, Composite Bonding, Orthodontics, Veneers, Crown Lengthening, Implants].
-            - يجب أن تقدم "actionPlan" وهي خطة عمل تنفيذية مجدولة زمنياً أو مرتبة كخطوات علاجية تتابعية.
-            - يجب أن تقدم "tips" وهي نصائح طبية وإرشادات تجميلية هامة للمريض للحفاظ على صحة ابتسامته.
-
-            أرجع النتيجة حصراً على هيئة كائن JSON منظم تماماً بالبنية التالية دون أي نصوص تمهيدية أو إضافية خارج الكائن:
-            {
-              "isValidDentalImage": true,
-              "score": 8,
-              "summary": "ملخص شامل ومكثف للحالة الجمالية للابتسامة",
-              "findings": [
-                "ملاحظة عينية بخصوص اللون أو التناظر 1",
-                "ملاحظة عينية بخصوص الإطباق أو الاصطفاف 2"
-              ],
-              "recommendedTreatments": [
-                "Whitening",
-                "Veneers"
-              ],
-              "actionPlan": [
-                "الخطوة الأولى: تهيئة اللثة والتنظيف الشامل",
-                "الخطوة الثانية: البدء بجلسات التبييض أو التحضير للعدسات"
-              ],
-              "tips": [
-                "نصيحة بخصوص العناية اليومية ونوع الفرشاة",
-                "نصيحة لتجنب المصبغات والمشروبات الداكنة"
-              ],
-              "patientExplanation": "إعادة صياغة ودية ومبسطة جداً ومطمئنة للمريض تشرح حالته والحلول دون مصطلحات معقدة"
-            }
-            `;
-
-            try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [
-                                { text: promptInstruction },
-                                { inlineData: { mimeType: "image/jpeg", data: base64ImageString } }
-                            ]
-                        }],
-                        generationConfig: { responseMimeType: "application/json" }
-                    })
-                });
-
-                if (!response.ok) throw new Error('فشل الاتصال بالخادم. يرجى التحقق من صحة مفتاح الـ API المدخل بالإدارة.');
-
-                const data = await response.json();
-                
-                // تنظيف الاستجابة لضمان معالجتها كـ JSON خالص
-                let responseText = data.candidates[0].content.parts[0].text;
-                responseText = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
-                
-                const parsedResult = JSON.parse(responseText);
-
-                if (!parsedResult.isValidDentalImage) {
-                    errorMessage.classList.remove('hidden');
-                    resetBtnStatus();
-                    return;
-                }
-
-                displayAestheticResults(parsedResult);
-
-            } catch (error) {
-                console.error(error);
-                alert('حدث خطأ فني أثناء التحليل: ' + error.message);
-                resetBtnStatus();
-            }
-        }
-
-        function resetBtnStatus() {
-            btnAnalyze.disabled = false;
-            btnSpinner.classList.add('hidden');
-            btnBrainIcon.classList.remove('hidden');
-            btnText.innerText = "ابدأ التحليل الفوري للابتسامة";
-        }
-
-        function displayAestheticResults(data) {
-            scoreBadge.innerText = `${data.score || 0}/10`;
-            clinicalSummary.innerText = data.summary || "لا يوجد ملخص متاح حالياً للحالة.";
-            patientExplanationText.innerText = data.patientExplanation || "لا يوجد شرح مبسط متوفر للمريض.";
-
-            findingsList.innerHTML = "";
-            treatmentsList.innerHTML = "";
-            actionPlanList.innerHTML = "";
-            tipsList.innerHTML = "";
-
-            // 1. الملاحظات والنتائج
-            if (data.findings && data.findings.length > 0) {
-                data.findings.forEach(function(finding) {
-                    const li = document.createElement('li');
-                    li.className = "bg-slate-50 border-r-4 border-royal-navy p-2 rounded-l-md flex items-start gap-1.5 shadow-sm";
-                    li.innerHTML = `<i class="fa-solid fa-square-check text-mint-cyan mt-1 text-[10px]"></i> <span>${finding}</span>`;
-                    findingsList.appendChild(li);
-                });
-            }
-
-            // 2. العلاجات المقترحة المترجمة
-            if (data.recommendedTreatments && data.recommendedTreatments.length > 0) {
-                data.recommendedTreatments.forEach(function(treatment) {
-                    const badge = document.createElement('span');
-                    badge.className = "bg-slate-900 text-white border border-slate-800 px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1 shadow-sm";
-                    badge.innerHTML = `<i class="fa-solid fa-notes-medical text-gold-accent"></i> ${translateTreatmentText(treatment)}`;
-                    treatmentsList.appendChild(badge);
-                });
-            }
-
-            // 3. خطة العمل (Action Plan)
-            if (data.actionPlan && data.actionPlan.length > 0) {
-                data.actionPlan.forEach(function(step) {
-                    const li = document.createElement('li');
-                    li.className = "p-1.5 border-b border-slate-100 last:border-0";
-                    li.innerHTML = `<span>${step}</span>`;
-                    actionPlanList.appendChild(li);
-                });
-            } else {
-                actionPlanList.innerHTML = "<li class='text-slate-400'>يتم تحديد خطة العمل التدريجية داخل العيادة.</li>";
-            }
-
-            // 4. النصائح والإرشادات (Tips)
-            if (data.tips && data.tips.length > 0) {
-                data.tips.forEach(function(tip) {
-                    const li = document.createElement('li');
-                    li.className = "flex items-start gap-2 p-1.5 bg-amber-50/40 rounded-lg mb-1 last:mb-0 text-slate-800";
-                    li.innerHTML = `<i class="fa-solid fa-lightbulb text-amber-500 mt-1 text-xs"></i> <span>${tip}</span>`;
-                    tipsList.appendChild(li);
-                });
-            } else {
-                tipsList.innerHTML = "<li class='text-slate-400'>المضمضة الدورية وتنظيف الأسنان مرتين يومياً.</li>";
-            }
-
-            resultsArea.classList.remove('hidden');
-            resetBtnStatus();
-            resultsArea.scrollIntoView({ behavior: 'smooth' });
-        }
-
-        function translateTreatmentText(engText) {
-            const dictionary = {
-                'Whitening': 'تبييض الأسنان (Whitening)',
-                'Composite Bonding': 'الترميم التجميلي المباشر (Composite Bonding)',
-                'Orthodontics': 'تقويم الأسنان (Orthodontics)',
-                'Veneers': 'عدسات الفينير التجميلية (Veneers)',
-                'Crown Lengthening': 'تطويل التيجان واللثة (Crown Lengthening)',
-                'Implants': 'زراعة وتعويض الأسنان (Implants)'
-            };
-            return dictionary[engText] || engText;
-        }
-
         function downloadAestheticReportPDF() {
             const manualText = doctorManualNotes.value.trim();
             if (manualText !== "") {
@@ -617,9 +676,23 @@
 
         function loadMockPatientReport() {
             const code = document.getElementById('patientCodeInput').value.trim();
-            if (!code) { alert('يرجى إدخل رمز الحالة للاستعلام أولاً.'); return; }
+            if (!code) { alert('يرجى إدخال رمز الحالة للاستعلام أولاً.'); return; }
             document.getElementById('patientReportContainer').classList.remove('hidden');
         }
+
+        function togglePatientCard() { patientExplainCard.classList.toggle('hidden'); }
+
+        // تصدير وتمرير الوظائف للنافذة العالمية (window) لتتمكن عناصر HTML من قراءتها واستدعائها
+        window.switchPortal = switchPortal;
+        window.runSmileAnalysis = runSmileAnalysis;
+        window.resetUploadArea = resetUploadArea;
+        window.togglePatientCard = togglePatientCard;
+        window.downloadAestheticReportPDF = downloadAestheticReportPDF;
+        window.loadMockPatientReport = loadMockPatientReport;
+        window.updateDentistStatus = updateDentistStatus;
+        window.deleteDentist = deleteDentist;
+        window.changeAdminPassword = changeAdminPassword;
+        window.saveGeminiKeyToFirebase = saveGeminiKeyToFirebase;
     </script>
 </body>
 </html>
