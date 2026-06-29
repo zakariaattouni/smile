@@ -393,7 +393,7 @@
             const manifestData = {
                 "name": "Smile AI",
                 "short_name": "SmileAI",
-                "start_url": window.location.href,
+                "start_url": window.location.origin + window.location.pathname,
                 "display": "standalone",
                 "background_color": "#0B192C",
                 "theme_color": "#0B192C",
@@ -416,15 +416,16 @@
             linkTag.rel = 'manifest';
             linkTag.href = manifestURL;
             document.head.appendChild(linkTag);
-            const swCode = `
-                self.addEventListener('install', (e) => self.skipWaiting());
-                self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
-                self.addEventListener('fetch', (e) => { e.respondWith(fetch(e.request).catch(() => new Response("Offline"))); });
-            `;
-            const swBlob = new Blob([swCode], {type: 'application/javascript'});
-            const swURL = URL.createObjectURL(swCode);
+            
             if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register(swURL).catch(() => {});
+                const swCode = `
+                    self.addEventListener('install', (e) => self.skipWaiting());
+                    self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
+                    self.addEventListener('fetch', (e) => { });
+                `;
+                const swBlob = new Blob([swCode], {type: 'application/javascript'});
+                const swBlobURL = URL.createObjectURL(swBlob);
+                navigator.serviceWorker.register(swBlobURL, { scope: './' }).catch(() => {});
             }
         }
         function checkSavedSession() {
@@ -645,6 +646,7 @@
             try {
                 const docRef = doc(db, "config", "gemini_settings");
                 const docSnap = await getDoc(docRef);
+                const firebaseStatus = document.getElementById('firebaseStatus');
                 if (docSnap.exists()) {
                     const data = docSnap.data();
                     activeGeminiApiKey = data.apiKey || "";
@@ -659,22 +661,24 @@
                     if(document.getElementById('dynamicKeyInput2')) document.getElementById('dynamicKeyInput2').value = rotatedApiKeysList[1] || "";
                     if(document.getElementById('dynamicKeyInput3')) document.getElementById('dynamicKeyInput3').value = rotatedApiKeysList[2] || "";
                     
-                    firebaseStatus.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i> متصل بـ Firebase ومفاتيح التناوب نشطة`;
+                    if(firebaseStatus) firebaseStatus.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i> متصل بـ Firebase ومفاتيح التناوب نشطة`;
                 } else {
-                    firebaseStatus.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-amber-400"></i> متصل بـ Firebase | الحقول فارغة`;
+                    if(firebaseStatus) firebaseStatus.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-amber-400"></i> متصل بـ Firebase | الحقول فارغة`;
                 }
             } catch (error) {
-                firebaseStatus.innerHTML = `<i class="fa-solid fa-cloud-bounce text-rose-400"></i> خطأ في الاتصال بالـ Cloud`;
+                const firebaseStatus = document.getElementById('firebaseStatus');
+                if(firebaseStatus) firebaseStatus.innerHTML = `<i class="fa-solid fa-cloud-bounce text-rose-400"></i> خطأ في الاتصال بالـ Cloud`;
             }
         }
         async function saveMultipleGeminiKeysToFirebase() {
             const key1 = document.getElementById('dynamicKeyInput1').value.trim();
             const key2 = document.getElementById('dynamicKeyInput2').value.trim();
             const key3 = document.getElementById('dynamicKeyInput3').value.trim();
+            const firebaseStatus = document.getElementById('firebaseStatus');
             
             if(!key1) { alert("يرجى كتابة المفتاح الأول على الأقل كقاعدة أساسية."); return; }
             try {
-                firebaseStatus.innerHTML = `<i class="fa-solid fa-arrows-spin animate-spin text-sky-400"></i> جاري مزامنة الـ Keys...`;
+                if(firebaseStatus) firebaseStatus.innerHTML = `<i class="fa-solid fa-arrows-spin animate-spin text-sky-400"></i> جاري مزامنة الـ Keys...`;
                 
                 const tempRotationArray = [key1];
                 if(key2) tempRotationArray.push(key2);
@@ -689,7 +693,7 @@
                 activeGeminiApiKey = key1;
                 rotatedApiKeysList = tempRotationArray;
                 
-                firebaseStatus.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i> تم الحفظ وتوزيع المفاتيح الثلاثة سحابياً 🚀`;
+                if(firebaseStatus) firebaseStatus.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i> تم الحفظ وتوزيع المفاتيح الثلاثة سحابياً 🚀`;
                 alert("تم تحديث وحفظ مصفوفة التناوب الثلاثية بنجاح على قاعدة البيانات!");
             } catch (error) {
                 alert("فشل الحفظ السحابي: تأكد من صلاحيات وقواعد الـ Firestore.");
@@ -776,13 +780,20 @@
             if(!found) return;
             toggleDentistWorkspace('scan');
             
+            const imagePreview = document.getElementById('imagePreview');
+            const previewContainer = document.getElementById('previewContainer');
+            const dropZone = document.getElementById('dropZone');
+            const btnAnalyze = document.getElementById('btnAnalyze');
+            
             if(found.image) {
                 base64ImageString = found.image;
-                imagePreview.src = `data:image/jpeg;base64,${found.image}`;
-                previewContainer.classList.remove('hidden');
-                dropZone.classList.add('hidden');
-                btnAnalyze.disabled = false;
-                btnAnalyze.classList.remove('opacity-50', 'cursor-not-allowed');
+                if(imagePreview) imagePreview.src = `data:image/jpeg;base64,${found.image}`;
+                if(previewContainer) previewContainer.classList.remove('hidden');
+                if(dropZone) dropZone.classList.add('hidden');
+                if(btnAnalyze) {
+                    btnAnalyze.disabled = false;
+                    btnAnalyze.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
             }
             
             document.getElementById('patientIdentifierInput').value = found.patientIdentifier || "";
@@ -831,13 +842,20 @@
                 return; 
             }
             
+            const btnAnalyze = document.getElementById('btnAnalyze');
+            const btnSpinner = document.getElementById('btnSpinner');
+            const btnBrainIcon = document.getElementById('btnBrainIcon');
+            const errorMessage = document.getElementById('errorMessage');
+            const resultsArea = document.getElementById('resultsArea');
+            const patientExplainCard = document.getElementById('patientExplainCard');
+            
             btnAnalyze.disabled = true;
-            btnSpinner.classList.remove('hidden');
-            btnBrainIcon.classList.add('hidden');
-            btnText.innerText = "يقوم الذكاء الاصطناعي بمطابقة المعايير وعزل المتغيرات الطبية...";
-            errorMessage.classList.add('hidden');
-            resultsArea.classList.add('hidden');
-            patientExplainCard.classList.add('hidden');
+            if(btnSpinner) btnSpinner.classList.remove('hidden');
+            if(btnBrainIcon) btnBrainIcon.classList.add('hidden');
+            document.getElementById('btnText').innerText = "يقوم الذكاء الاصطناعي بمطابقة المعايير وعزل المتغيرات الطبية...";
+            if(errorMessage) errorMessage.classList.add('hidden');
+            if(resultsArea) resultsArea.classList.add('hidden');
+            if(patientExplainCard) patientExplainCard.classList.add('hidden');
             document.getElementById('pdfPatientLabel').classList.add('hidden');
             
             const promptInstruction = `
@@ -919,7 +937,7 @@
                 
                 const parsedResult = JSON.parse(responseText);
                 if (!parsedResult.isValidDentalImage) {
-                    errorMessage.classList.remove('hidden');
+                    if(errorMessage) errorMessage.classList.remove('hidden');
                     resetBtnStatus();
                     return;
                 }
@@ -959,10 +977,13 @@
             }
         }
         function resetBtnStatus() {
-            btnAnalyze.disabled = false;
-            btnSpinner.classList.add('hidden');
-            btnBrainIcon.classList.remove('hidden');
-            btnText.innerText = "ابدأ التحليل الفوري للابتسامة";
+            const btnAnalyze = document.getElementById('btnAnalyze');
+            const btnSpinner = document.getElementById('btnSpinner');
+            const btnBrainIcon = document.getElementById('btnBrainIcon');
+            if(btnAnalyze) btnAnalyze.disabled = false;
+            if(btnSpinner) btnSpinner.classList.add('hidden');
+            if(btnBrainIcon) btnBrainIcon.classList.remove('hidden');
+            document.getElementById('btnText').innerText = "ابدأ التحليل الفوري للابتسامة";
         }
         function applyDynamicCardStyle(elementId, badgeId, score) {
             const cardEl = document.getElementById(elementId);
@@ -984,27 +1005,40 @@
             }
         }
         function displayAestheticResults(data) {
+            const confidencePercentText = document.getElementById('confidencePercentText');
+            const confidenceProgressBar = document.getElementById('confidenceProgressBar');
+            const clinicalSummary = document.getElementById('clinicalSummary');
+            const patientExplanationText = document.getElementById('patientExplanationText');
+            const findingsList = document.getElementById('findingsList');
+            const treatmentsList = document.getElementById('treatmentsList');
+            const actionPlanTimeline = document.getElementById('actionPlanTimeline');
+            const tipsList = document.getElementById('tipsList');
+            const treatmentComparisonTableBody = document.getElementById('treatmentComparisonTableBody');
+            const resultsArea = document.getElementById('resultsArea');
+            
             const confVal = data.confidence || 0;
-            confidencePercentText.innerText = `${confVal}%`;
-            confidenceProgressBar.style.width = `0%`;
-            setTimeout(() => {
-                confidenceProgressBar.style.width = `${confVal}%`;
-            }, 100);
+            if(confidencePercentText) confidencePercentText.innerText = `${confVal}%`;
+            if(confidenceProgressBar) {
+                confidenceProgressBar.style.width = `0%`;
+                setTimeout(() => {
+                    confidenceProgressBar.style.width = `${confVal}%`;
+                }, 100);
+            }
             applyDynamicCardStyle('cardOverall', 'badgeOverall', data.overallScore || 0);
             applyDynamicCardStyle('cardSymmetry', 'badgeSymmetry', data.symmetryScore || 0);
             applyDynamicCardStyle('cardColor', 'badgeColor', data.colorScore || 0);
             applyDynamicCardStyle('cardAlignment', 'badgeAlignment', data.alignmentScore || 0);
             applyDynamicCardStyle('cardGingival', 'badgeGingival', data.gingivalScore || 0);
             
-            clinicalSummary.innerText = data.summary || "لا يوجد ملخص متاح حالياً للحالة.";
-            patientExplanationText.innerText = data.patientExplanation || "لا يوجد شرح مبسط متوفر للمريض.";
-            findingsList.innerHTML = "";
-            treatmentsList.innerHTML = "";
-            actionPlanTimeline.innerHTML = "";
-            tipsList.innerHTML = "";
-            treatmentComparisonTableBody.innerHTML = "";
+            if(clinicalSummary) clinicalSummary.innerText = data.summary || "لا يوجد ملخص متاح حالياً للحالة.";
+            if(patientExplanationText) patientExplanationText.innerText = data.patientExplanation || "لا يوجد شرح مبسط متوفر للمريض.";
+            if(findingsList) findingsList.innerHTML = "";
+            if(treatmentsList) treatmentsList.innerHTML = "";
+            if(actionPlanTimeline) actionPlanTimeline.innerHTML = "";
+            if(tipsList) tipsList.innerHTML = "";
+            if(treatmentComparisonTableBody) treatmentComparisonTableBody.innerHTML = "";
             
-            if (data.treatmentComparison && data.treatmentComparison.length > 0) {
+            if (data.treatmentComparison && data.treatmentComparison.length > 0 && treatmentComparisonTableBody) {
                 data.treatmentComparison.forEach(function(row) {
                     const tr = document.createElement('tr');
                     tr.className = "hover:bg-slate-100 transition-colors text-slate-700 font-medium";
@@ -1017,10 +1051,10 @@
                     `;
                     treatmentComparisonTableBody.appendChild(tr);
                 });
-            } else {
+            } else if(treatmentComparisonTableBody) {
                 treatmentComparisonTableBody.innerHTML = `<tr><td colspan="5" class="text-center p-3 text-slate-400">الخيارات المقارنة مدمجة ضمن بنية خطة العلاج التمهيدية.</td></tr>`;
             }
-            if (data.findings && data.findings.length > 0) {
+            if (data.findings && data.findings.length > 0 && findingsList) {
                 data.findings.forEach(function(finding) {
                     const li = document.createElement('li');
                     li.className = "bg-slate-50 border-r-4 border-royal-navy p-2 rounded-l-md flex items-start gap-1.5 shadow-sm";
@@ -1028,7 +1062,7 @@
                     findingsList.appendChild(li);
                 });
             }
-            if (data.recommendedTreatments && data.recommendedTreatments.length > 0) {
+            if (data.recommendedTreatments && data.recommendedTreatments.length > 0 && treatmentsList) {
                 data.recommendedTreatments.forEach(function(treatment) {
                     const badge = document.createElement('span');
                     badge.className = "bg-slate-900 text-white border border-slate-800 px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1 shadow-sm";
@@ -1036,7 +1070,7 @@
                     treatmentsList.appendChild(badge);
                 });
             }
-            if (data.actionPlanTimeline && data.actionPlanTimeline.length > 0) {
+            if (data.actionPlanTimeline && data.actionPlanTimeline.length > 0 && actionPlanTimeline) {
                 data.actionPlanTimeline.forEach(function(item) {
                     const stepDiv = document.createElement('div');
                     stepDiv.className = "relative pr-7";
@@ -1052,7 +1086,7 @@
                     actionPlanTimeline.appendChild(stepDiv);
                 });
             }
-            if (data.tips && data.tips.length > 0) {
+            if (data.tips && data.tips.length > 0 && tipsList) {
                 data.tips.forEach(function(tip) {
                     const li = document.createElement('li');
                     li.className = "flex items-start gap-2 p-1.5 bg-amber-50/40 rounded-lg mb-1 last:mb-0 text-slate-800";
@@ -1065,9 +1099,11 @@
                 document.getElementById('pdfPatientLabel').innerText = `اسم المريض / المعرف السريري: ${nameInput}`;
                 document.getElementById('pdfPatientLabel').classList.remove('hidden');
             }
-            resultsArea.classList.remove('hidden');
-            resetBtnStatus();
-            resultsArea.scrollIntoView({ behavior: 'smooth' });
+            if(resultsArea) {
+                resultsArea.classList.remove('hidden');
+                resetBtnStatus();
+                resultsArea.scrollIntoView({ behavior: 'smooth' });
+            }
         }
         function translateTreatmentText(engText) {
             const dictionary = {
@@ -1081,7 +1117,7 @@
             return dictionary[engText] || engText;
         }
         if(document.getElementById('dropZone')) { 
-            document.getElementById('dropZone').addEventListener('click', function() { fileInput.click(); }); 
+            document.getElementById('dropZone').addEventListener('click', function() { document.getElementById('fileInput').click(); }); 
         }
         if(document.getElementById('fileInput')) {
             document.getElementById('fileInput').addEventListener('change', function(e) { if (e.target.files.length > 0) handleFile(e.target.files[0]); });
@@ -1091,34 +1127,65 @@
             const reader = new FileReader();
             reader.onload = function(e) {
                 base64ImageString = e.target.result.split(',')[1];
-                imagePreview.src = e.target.result;
-                previewContainer.classList.remove('hidden');
-                dropZone.classList.add('hidden');
-                btnAnalyze.disabled = false;
-                btnAnalyze.classList.remove('opacity-50', 'cursor-not-allowed');
-                errorMessage.classList.add('hidden');
+                const imagePreview = document.getElementById('imagePreview');
+                const previewContainer = document.getElementById('previewContainer');
+                const dropZone = document.getElementById('dropZone');
+                const btnAnalyze = document.getElementById('btnAnalyze');
+                const errorMessage = document.getElementById('errorMessage');
+                
+                if(imagePreview) imagePreview.src = e.target.result;
+                if(previewContainer) previewContainer.classList.remove('hidden');
+                if(dropZone) dropZone.classList.add('hidden');
+                if(btnAnalyze) {
+                    btnAnalyze.disabled = false;
+                    btnAnalyze.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+                if(errorMessage) errorMessage.classList.add('hidden');
             };
             reader.readAsDataURL(file);
         }
         function resetUploadArea() {
-            fileInput.value = ""; base64ImageString = "";
-            previewContainer.classList.add('hidden'); imagePreview.src = "";
-            dropZone.classList.remove('hidden');
-            btnAnalyze.disabled = true; btnAnalyze.classList.add('opacity-50', 'cursor-not-allowed');
-            errorMessage.classList.add('hidden'); resultsArea.classList.add('hidden');
-            patientExplainCard.classList.add('hidden'); doctorManualNotes.value = "";
+            const fileInput = document.getElementById('fileInput');
+            const previewContainer = document.getElementById('previewContainer');
+            const imagePreview = document.getElementById('imagePreview');
+            const dropZone = document.getElementById('dropZone');
+            const btnAnalyze = document.getElementById('btnAnalyze');
+            const errorMessage = document.getElementById('errorMessage');
+            const resultsArea = document.getElementById('resultsArea');
+            const patientExplainCard = document.getElementById('patientExplainCard');
+            const doctorManualNotes = document.getElementById('doctorManualNotes');
+            const confidenceProgressBar = document.getElementById('confidenceProgressBar');
+            const confidencePercentText = document.getElementById('confidencePercentText');
+            
+            if(fileInput) fileInput.value = ""; 
+            base64ImageString = "";
+            if(previewContainer) previewContainer.classList.add('hidden'); 
+            if(imagePreview) imagePreview.src = "";
+            if(dropZone) dropZone.classList.remove('hidden');
+            if(btnAnalyze) {
+                btnAnalyze.disabled = true; 
+                btnAnalyze.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+            if(errorMessage) errorMessage.classList.add('hidden'); 
+            if(resultsArea) resultsArea.classList.add('hidden');
+            if(patientExplainCard) patientExplainCard.classList.add('hidden'); 
+            if(doctorManualNotes) doctorManualNotes.value = "";
             document.getElementById('patientIdentifierInput').value = "";
             document.getElementById('pdfPatientLabel').classList.add('hidden');
-            confidenceProgressBar.style.width = `0%`;
-            confidencePercentText.innerText = "0%";
+            if(confidenceProgressBar) confidenceProgressBar.style.width = `0%`;
+            if(confidencePercentText) confidencePercentText.innerText = "0%";
         }
         function downloadAestheticReportPDF() {
-            const manualText = doctorManualNotes.value.trim();
+            const doctorManualNotes = document.getElementById('doctorManualNotes');
+            const pdfDoctorNotesText = document.getElementById('pdfDoctorNotesText');
+            const pdfDoctorNotesContainer = document.getElementById('pdfDoctorNotesContainer');
+            
+            const manualText = doctorManualNotes ? doctorManualNotes.value.trim() : "";
             if (manualText !== "") {
-                pdfDoctorNotesText.innerText = manualText;
-                pdfDoctorNotesContainer.classList.remove('hidden');
+                if(pdfDoctorNotesText) pdfDoctorNotesText.innerText = manualText;
+                if(pdfDoctorNotesContainer) pdfDoctorNotesContainer.classList.remove('hidden');
             } else {
-                pdfDoctorNotesContainer.classList.add('hidden');
+                if(pdfDoctorNotesContainer) pdfDoctorNotesContainer.classList.add('hidden');
             }
             const element = document.getElementById('pdfReportContent');
             const options = {
@@ -1160,7 +1227,10 @@
                 document.getElementById('pwaInstallBanner').classList.add('hidden');
             }
         }
-        function togglePatientCard() { patientExplainCard.classList.toggle('hidden'); }
+        function togglePatientCard() { 
+            const patientExplainCard = document.getElementById('patientExplainCard');
+            if(patientExplainCard) patientExplainCard.classList.toggle('hidden'); 
+        }
         window.switchAuthTab = switchAuthTab;
         window.processDoctorRegistration = processDoctorRegistration;
         window.processDoctorLogin = processDoctorLogin;
