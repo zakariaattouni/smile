@@ -283,18 +283,30 @@
             </div>
         </section>
         <section id="portal-admin" class="hidden space-y-5">
-            <div class="bg-slate-900 text-white rounded-2xl p-5 border border-[#D4AF37]/20 space-y-3">
+            <div class="bg-slate-900 text-white rounded-2xl p-5 border border-[#D4AF37]/20 space-y-4">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2">
                         <i class="fa-solid fa-cloud text-mint-cyan text-base"></i>
-                        <h3 class="text-sm font-bold">بوابة التحكم السحابي وطلبات التسجيل</h3>
+                        <h3 class="text-sm font-bold">منفذ التحكم بالتناوب السحابي الثلاثي (Gemini API Rotation)</h3>
                     </div>
                     <span id="firebaseStatus" class="text-[10px] bg-slate-800 text-slate-300 px-2 py-1 rounded-lg font-bold">جاري المزامنة مع السحابة...</span>
                 </div>
-                <div class="space-y-2">
-                    <input type="password" id="dynamicKeyInput" placeholder="أدخل مفتاح Gemini هنا (AIzaSy...)" class="w-full p-2.5 bg-slate-800 font-mono text-xs text-slate-100 border border-slate-700 rounded-xl focus:outline-none">
-                    <button onclick="saveGeminiKeyToFirebase()" class="w-full bg-teal-600 text-white text-xs font-bold py-2.5 rounded-xl flex items-center justify-center gap-1.5">
-                        <i class="fa-solid fa-floppy-disk"></i> حفظ وتحديث مفتاح الذكاء الاصطناعي العام للسحابة
+                
+                <div class="space-y-3 bg-slate-800/60 p-4 rounded-xl border border-slate-700/50">
+                    <div>
+                        <label class="text-[11px] font-bold text-emerald-400 block mb-1">المفتاح الرئيسي (Primary API Key):</label>
+                        <input type="password" id="dynamicKeyInput1" placeholder="أدخل مفتاح Gemini الأول هنا (AIzaSy...)" class="w-full p-2.5 bg-slate-800 font-mono text-xs text-slate-100 border border-slate-700 rounded-xl focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="text-[11px] font-bold text-amber-400 block mb-1">المفتاح الاحتياطي الثاني (Backup Key 2):</label>
+                        <input type="password" id="dynamicKeyInput2" placeholder="أدخل مفتاح Gemini الثاني هنا (AIzaSy...)" class="w-full p-2.5 bg-slate-800 font-mono text-xs text-slate-100 border border-slate-700 rounded-xl focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="text-[11px] font-bold text-sky-400 block mb-1">المفتاح الاحتياطي الثالث (Backup Key 3):</label>
+                        <input type="password" id="dynamicKeyInput3" placeholder="أدخل مفتاح Gemini الثالث هنا (AIzaSy...)" class="w-full p-2.5 bg-slate-800 font-mono text-xs text-slate-100 border border-slate-700 rounded-xl focus:outline-none">
+                    </div>
+                    <button onclick="saveMultipleGeminiKeysToFirebase()" class="w-full mt-2 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-3 rounded-xl flex items-center justify-center gap-1.5 transition-colors shadow-md">
+                        <i class="fa-solid fa-floppy-disk"></i> حفظ وتحديث بنية المفاتيح الثلاثة المتناوبة سحابياً
                     </button>
                 </div>
             </div>
@@ -636,41 +648,51 @@
                 if (docSnap.exists()) {
                     const data = docSnap.data();
                     activeGeminiApiKey = data.apiKey || "";
-                    dynamicKeyInput.value = activeGeminiApiKey;
                     
-                    // جلب قائمة التناوب الثلاثية إن وجدت في السحابة
                     if (data.keys_rotation && Array.isArray(data.keys_rotation)) {
                         rotatedApiKeysList = data.keys_rotation.filter(k => k.trim() !== "");
+                    } else {
+                        rotatedApiKeysList = [activeGeminiApiKey];
                     }
                     
-                    firebaseStatus.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i> متصل بـ Firebase ومفتاح المحاكاة نشط`;
+                    if(document.getElementById('dynamicKeyInput1')) document.getElementById('dynamicKeyInput1').value = rotatedApiKeysList[0] || activeGeminiApiKey;
+                    if(document.getElementById('dynamicKeyInput2')) document.getElementById('dynamicKeyInput2').value = rotatedApiKeysList[1] || "";
+                    if(document.getElementById('dynamicKeyInput3')) document.getElementById('dynamicKeyInput3').value = rotatedApiKeysList[2] || "";
+                    
+                    firebaseStatus.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i> متصل بـ Firebase ومفاتيح التناوب نشطة`;
                 } else {
-                    firebaseStatus.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-amber-400"></i> متصل بـ Firebase | الحقل فارغ`;
+                    firebaseStatus.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-amber-400"></i> متصل بـ Firebase | الحقول فارغة`;
                 }
             } catch (error) {
                 firebaseStatus.innerHTML = `<i class="fa-solid fa-cloud-bounce text-rose-400"></i> خطأ في الاتصال بالـ Cloud`;
             }
         }
-        async function saveGeminiKeyToFirebase() {
-            const keyInputVal = dynamicKeyInput.value.trim();
-            if(!keyInputVal) { alert("يرجى كتابة أو لصق رمز المفتاح أولاً."); return; }
+        async function saveMultipleGeminiKeysToFirebase() {
+            const key1 = document.getElementById('dynamicKeyInput1').value.trim();
+            const key2 = document.getElementById('dynamicKeyInput2').value.trim();
+            const key3 = document.getElementById('dynamicKeyInput3').value.trim();
+            
+            if(!key1) { alert("يرجى كتابة المفتاح الأول على الأقل كقاعدة أساسية."); return; }
             try {
-                firebaseStatus.innerHTML = `<i class="fa-solid fa-arrows-spin animate-spin text-sky-400"></i> جاري الرفع...`;
+                firebaseStatus.innerHTML = `<i class="fa-solid fa-arrows-spin animate-spin text-sky-400"></i> جاري مزامنة الـ Keys...`;
                 
-                // نقوم بحفظ المفتاح الأساسي، بالإضافة إلى مصفوفة افتراضية للتناوب تحتوي عليه كمفتاح أول لضمان تفعيل البنية الرقمية
+                const tempRotationArray = [key1];
+                if(key2) tempRotationArray.push(key2);
+                if(key3) tempRotationArray.push(key3);
+                
                 const payload = { 
-                    apiKey: keyInputVal,
-                    keys_rotation: [keyInputVal, "", ""] // يمكن تعديلها مباشرة في الـ console أو تخصيصها لاحقاً
+                    apiKey: key1,
+                    keys_rotation: tempRotationArray
                 };
                 
                 await setDoc(doc(db, "config", "gemini_settings"), payload);
-                activeGeminiApiKey = keyInputVal;
-                rotatedApiKeysList = [keyInputVal];
+                activeGeminiApiKey = key1;
+                rotatedApiKeysList = tempRotationArray;
                 
-                firebaseStatus.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i> تم الحفظ السحابي بنجاح 🚀`;
-                alert("تم تحديث مفتاح الخادم العام وبنية التناوب بنجاح!");
+                firebaseStatus.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i> تم الحفظ وتوزيع المفاتيح الثلاثة سحابياً 🚀`;
+                alert("تم تحديث وحفظ مصفوفة التناوب الثلاثية بنجاح على قاعدة البيانات!");
             } catch (error) {
-                alert("فشل الحفظ: تأكد من الصلاحيات.");
+                alert("فشل الحفظ السحابي: تأكد من صلاحيات وقواعد الـ Firestore.");
             }
         }
         async function updateDoctorDashboardAndArchive() {
@@ -798,10 +820,8 @@
             }
         }
         async function runSmileAnalysis() {
-            // الاستعداد لتحديد المفتاح المستخدم بناء على آلية التناوب السحابي لمنع توقف الحصص
             let keyToUse = activeGeminiApiKey;
             if (rotatedApiKeysList && rotatedApiKeysList.length > 0) {
-                // نعتمد التناوب التلقائي الدوار العشوائي أو المرتب للمفاتيح الثلاث المستدعاة
                 const index = Math.floor(Math.random() * rotatedApiKeysList.length);
                 keyToUse = rotatedApiKeysList[index] || activeGeminiApiKey;
             }
@@ -829,8 +849,8 @@
             - بالنسبة لحقل "recommendedTreatments" اختر فقط المناسب من القائمة التالية حصراً: [Whitening, Composite Bonding, Orthodontics, Veneers, Crown Lengthening, Implants].
             - حقول العلامات والتقييمات يجب أن تكون أرقاماً صحيحة (Integers) من 1 إلى 10.
             - حقل "confidence" يمثل موثوقية ودقة التحليل بالنسبة المئوية من 1 إلى 100.
-            - حقل "actionPlanTimeline" يجب أن يحتوي على 4 عناصر بالترتيب الزمني تماماً: الجلسة الأولى، الجلسة الثانية، الجلسة الثالثة، الجلسة الرابعة، متضمناً تفاصيل سريرية واضحة للطبيب المعالج.
-            - حقل "treatmentComparison" يجب أن يحتوي على مصفوفة مقارنة لثلاثة خيارات علاجية بديلة محتملة للحالة (مثل الفينير، التبييض، التقويم، أو الترميم المباشر) بناء على المعايير الخمسة المطلوبة.
+            - حقل "actionPlanTimeline" يجب أن تحتوي على 4 عناصر بالترتيب الزمني تماماً: الجلسة الأولى، الجلسة الثانية، الجلسة الثالثة، الجلسة الرابعة، متضمناً تفاصيل سريرية واضحة للطبيب المعالج.
+            - حقل "treatmentComparison" يجب أن تحتوي على مصفوفة مقارنة لثلاثة خيارات علاجية بديلة محتملة للحالة (مثل الفينير، التبييض، التقويم، أو الترميم المباشر) بناء على المعايير الخمسة المطلوبة.
             أرجع النتيجة حصراً على هيئة كائن JSON منظم تماماً بالبنية التالية دون أي نصوص تمهيدية أو إضافية خارج الكائن:
             {
               "isValidDentalImage": true,
@@ -1153,7 +1173,7 @@
         window.togglePatientCard = togglePatientCard;
         window.downloadAestheticReportPDF = downloadAestheticReportPDF;
         window.loadMockPatientReport = loadMockPatientReport;
-        window.saveGeminiKeyToFirebase = saveGeminiKeyToFirebase;
+        window.saveMultipleGeminiKeysToFirebase = saveMultipleGeminiKeysToFirebase;
         window.triggerPWAInstallation = triggerPWAInstallation;
         window.toggleDentistWorkspace = toggleDentistWorkspace;
         window.filterArchiveCards = filterArchiveCards;
