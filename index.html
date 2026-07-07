@@ -24,6 +24,34 @@
         /* Loading Spinner */
         .loader { border: 3px solid #f3f3f3; border-top: 3px solid #10B981; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* WhatsApp Bar Style */
+        .whatsapp-bar {
+            background: #25D366;
+            color: white;
+            border-radius: 12px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            font-weight: bold;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+            transition: all 0.2s ease;
+            border: none;
+            width: 100%;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .whatsapp-bar:hover {
+            background: #1da851;
+            transform: scale(1.02);
+            box-shadow: 0 6px 16px rgba(37, 211, 102, 0.4);
+        }
+        .whatsapp-bar i {
+            font-size: 22px;
+        }
     </style>
 </head>
 <body class="text-slate-800 min-h-screen flex flex-col justify-between pb-20 md:pb-0">
@@ -50,6 +78,12 @@
     </header>
     <main class="max-w-4xl w-full mx-auto px-4 py-6 flex-grow">
         <section id="portal-auth" class="max-w-md mx-auto space-y-5">
+            <!-- WhatsApp Bar - يظهر في صفحة الدخول فقط -->
+            <a href="https://wa.me/963939436998" target="_blank" class="whatsapp-bar">
+                <i class="fa-brands fa-whatsapp"></i>
+                تواصل لتفعيل الاشتراك
+            </a>
+
             <div class="grid grid-cols-4 gap-1 bg-slate-200 p-1 rounded-xl text-[10px] md:text-xs text-center font-bold">
                 <button onclick="switchAuthTab('login-dentist')" id="tab-login-dentist" class="py-2 rounded-lg bg-royal-navy text-white shadow-sm">دخول طبيب</button>
                 <button onclick="switchAuthTab('register-dentist')" id="tab-register-dentist" class="py-2 rounded-lg text-slate-700">حساب جديد</button>
