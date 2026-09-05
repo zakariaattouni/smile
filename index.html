@@ -114,15 +114,9 @@
             transition: all 0.2s;
             font-family: 'Cairo', sans-serif;
         }
-        .btn-reset-confirm {
-            background: #10B981;
-            color: white;
-        }
+        .btn-reset-confirm { background: #10B981; color: white; }
         .btn-reset-confirm:hover { background: #059669; }
-        .btn-reset-cancel {
-            background: #F3F4F6;
-            color: #4B5563;
-        }
+        .btn-reset-cancel { background: #F3F4F6; color: #4B5563; }
         .btn-reset-cancel:hover { background: #E5E7EB; }
     </style>
 </head>
@@ -141,7 +135,7 @@
             <div id="userBadgeArea" class="hidden mt-3 bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700 text-xs flex items-center gap-2 flex-wrap justify-center">
                 <span class="text-emerald-400"><i class="fa-solid fa-user-md"></i> المفتوح حالياً: <span id="currentLoggedDoctorName" class="font-bold text-white"></span></span>
                 <span id="quotaDisplayBadge" class="hidden bg-slate-700 text-amber-400 px-2 py-0.5 rounded text-[10px] font-mono border border-slate-600">
-                    الرصيد: <span id="remainingQuotaCount">0</span>
+                    الرصيد اليومي: <span id="remainingQuotaCount">0</span>
                 </span>
                 <span id="subscriptionExpiryBadge" class="hidden bg-slate-700 text-emerald-400 px-2 py-0.5 rounded text-[10px] font-mono border border-slate-600">
                     ينتهي: <span id="subscriptionExpiryDate">--</span>
@@ -199,7 +193,7 @@
                 </div>
                 <div id="patientReportContainer" class="hidden max-w-md mx-auto text-right bg-indigo-50 border border-indigo-100 rounded-xl p-4 mt-3">
                     <span class="text-xs font-bold text-indigo-950 block mb-1"><i class="fa-solid fa-circle-check text-emerald-500"></i> النتيجة العامة لابتسامتك: 8.5/10</span>
-                    <p class="text-[11px] text-indigo-900 leading-relaxed">أهلاً بك يا فندم، مظهر ابتسامتك العام متناسق وجميل جداً. ينصح طبيبك المعالج بإجراء تبييض ليزري دوري للحفاظ على نصوع وبياض الأسنان الساحر.</p>
+                    <p class="text-[11px] text-indigo-900 leading-relaxed">أهلاً بك، مظهر ابتسامتك العام متناسق وجميل جداً. ينصح طبيبك المعالج بإجراء تبييض ليزري دوري للحفاظ على نصوع وبياض الأسنان الساحر.</p>
                 </div>
             </div>
             <div id="form-login-admin" class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-3">
@@ -249,10 +243,10 @@
                 <div class="flex items-center gap-2">
                     <i class="fa-solid fa-crown text-amber-500"></i>
                     <span class="font-bold text-slate-700">حالة الاشتراك:</span>
-                    <span id="subscriptionStatusText" class="font-bold text-amber-600">مجاني (3 تحليلات)</span>
+                    <span id="subscriptionStatusText" class="font-bold text-amber-600">مجاني (2 تحليل يومياً)</span>
                 </div>
                 <button onclick="openSubscriptionRequest()" class="bg-gradient-to-r from-amber-500 to-yellow-600 text-white font-bold px-4 py-1.5 rounded-lg shadow-md hover:scale-105 transition-all text-xs">
-                    <i class="fa-solid fa-arrow-up-right-from-square"></i> طلب اشتراك مدفوع
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> طلب ترقية الاشتراك
                 </button>
             </div>
             
@@ -429,15 +423,15 @@
                 <div class="space-y-3 bg-slate-800/60 p-4 rounded-xl border border-slate-700/50">
                     <div>
                         <label class="text-[11px] font-bold text-emerald-400 block mb-1">المفتاح الرئيسي (Primary API Key):</label>
-                        <input type="password" id="dynamicKeyInput1" placeholder="أدخل مفتاح Gemini الأول هنا (AIzaSy... أو AQ...)" class="w-full p-2.5 bg-slate-800 font-mono text-xs text-slate-100 border border-slate-700 rounded-xl focus:outline-none">
+                        <input type="password" id="dynamicKeyInput1" placeholder="أدخل مفتاح Gemini الأول هنا (AIzaSy...)" class="w-full p-2.5 bg-slate-800 font-mono text-xs text-slate-100 border border-slate-700 rounded-xl focus:outline-none">
                     </div>
                     <div>
                         <label class="text-[11px] font-bold text-amber-400 block mb-1">المفتاح الاحتياطي الثاني (Backup Key 2):</label>
-                        <input type="password" id="dynamicKeyInput2" placeholder="أدخل مفتاح Gemini الثاني هنا (AIzaSy... أو AQ...)" class="w-full p-2.5 bg-slate-800 font-mono text-xs text-slate-100 border border-slate-700 rounded-xl focus:outline-none">
+                        <input type="password" id="dynamicKeyInput2" placeholder="أدخل مفتاح Gemini الثاني هنا" class="w-full p-2.5 bg-slate-800 font-mono text-xs text-slate-100 border border-slate-700 rounded-xl focus:outline-none">
                     </div>
                     <div>
                         <label class="text-[11px] font-bold text-sky-400 block mb-1">المفتاح الاحتياطي الثالث (Backup Key 3):</label>
-                        <input type="password" id="dynamicKeyInput3" placeholder="أدخل مفتاح Gemini الثالث هنا (AIzaSy... أو AQ...)" class="w-full p-2.5 bg-slate-800 font-mono text-xs text-slate-100 border border-slate-700 rounded-xl focus:outline-none">
+                        <input type="password" id="dynamicKeyInput3" placeholder="أدخل مفتاح Gemini الثالث هنا" class="w-full p-2.5 bg-slate-800 font-mono text-xs text-slate-100 border border-slate-700 rounded-xl focus:outline-none">
                     </div>
                     <button onclick="saveMultipleGeminiKeysToFirebase()" class="w-full mt-2 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-3 rounded-xl flex items-center justify-center gap-1.5 transition-colors shadow-md">
                         <i class="fa-solid fa-floppy-disk"></i> حفظ وتحديث بنية المفاتيح الثلاثة المتناوبة سحابياً
@@ -455,7 +449,7 @@
                             <tr>
                                 <th class="p-2">الطبيب / المركز والاتصال</th>
                                 <th class="p-2 text-center">الحالة</th>
-                                <th class="p-2 text-center">الاشتراك / التحليلات</th>
+                                <th class="p-2 text-center">نوع الاشتراك</th>
                                 <th class="p-2 text-left">الإجراء الفوري</th>
                             </tr>
                         </thead>
@@ -486,45 +480,51 @@
     <div id="subscriptionModal" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-slate-100 pb-3 mb-4">
-                <h3 class="text-lg font-bold text-royal-navy"><i class="fa-solid fa-crown text-amber-500"></i> طلب اشتراك مدفوع (مميز)</h3>
+                <h3 class="text-lg font-bold text-royal-navy"><i class="fa-solid fa-crown text-amber-500"></i> طلب ترقية الاشتراك</h3>
                 <button onclick="closeSubscriptionModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
             <div class="space-y-4 text-sm">
-                <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
-                    <p class="font-bold text-emerald-800">📋 تفاصيل الباقة المدفوعة:</p>
-                    <ul class="text-xs text-emerald-700 space-y-1 mt-1">
-                        <li>✅ <span class="font-bold">50 تحليلاً</span> بالذكاء الاصطناعي.</li>
-                        <li>✅ صلاحية <span class="font-bold">6 أشهر</span> من تاريخ التفعيل.</li>
-                        <li>✅ أرشفة غير محدودة للحالات.</li>
-                        <li>✅ إمكانية تصدير تقارير PDF غير محدودة.</li>
-                    </ul>
-                </div>
-                <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                    <p class="font-bold text-amber-800">💰 رسوم الاشتراك لمدة 6 أشهر: <span class="text-lg">10$</span> (أو ما يعادلها بالليرة السورية).</p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-2">
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
+                        <h4 class="font-bold text-slate-700">مجاني</h4>
+                        <p class="text-xl font-black text-slate-900 my-1">0 $</p>
+                        <p class="text-xs text-slate-500">تحليلين (2) يومياً</p>
+                    </div>
+                    <div class="bg-amber-50 border-2 border-amber-500 rounded-xl p-3 text-center relative">
+                        <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">الأكثر طلباً</div>
+                        <h4 class="font-bold text-amber-700">6 أشهر</h4>
+                        <p class="text-xl font-black text-slate-900 my-1">15 $</p>
+                        <p class="text-xs text-slate-500">20 تحليل يومياً</p>
+                    </div>
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
+                        <h4 class="font-bold text-slate-700">سنة كاملة</h4>
+                        <p class="text-xl font-black text-slate-900 my-1">25 $</p>
+                        <p class="text-xs text-slate-500">25 تحليل يومياً</p>
+                    </div>
                 </div>
                 <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2">
                     <p class="font-bold text-slate-700"><i class="fa-solid fa-building-columns"></i> بيانات التحويل:</p>
                     <div class="text-xs space-y-1 text-slate-600">
-                        <p><span class="font-bold text-slate-800">📌 الاسم:</span> ذكريا محمد عطوني</p>
+                        <p><span class="font-bold text-slate-800">📌 الاسم:</span> د. زكريا محمد عطوني</p>
                         <p><span class="font-bold text-slate-800">📌 رقم الجوال:</span> <a href="tel:+963939436998" class="text-blue-600">+963 939 436 998</a></p>
                         <p><span class="font-bold text-slate-800">📌 المدينة:</span> اللاذقية - سوريا</p>
-                        <p class="mt-2 text-amber-700"><i class="fa-solid fa-info-circle"></i> يمكن التحويل عبر:</p>
+                        <p class="mt-2 text-amber-700 font-bold"><i class="fa-solid fa-info-circle"></i> طرق الدفع المعتمدة:</p>
                         <ul class="list-disc pr-5 space-y-0.5 text-amber-700">
                             <li>ويسترن يونيون (Western Union)</li>
                             <li>الهرم</li>
                             <li>الفؤاد</li>
+                            <li>شام كاش (Sham Cash)</li>
                         </ul>
                     </div>
                 </div>
                 <div class="space-y-2">
-                    <label class="text-xs font-bold text-slate-600 block">📎 صورة إيصال الدفع (اختياري):</label>
+                    <label class="text-xs font-bold text-slate-600 block">📎 صورة إيصال الدفع (اختياري لتسريع التفعيل):</label>
                     <input type="file" id="paymentReceiptInput" accept="image/*" class="w-full p-2 border border-slate-200 rounded-xl text-xs">
-                    <p class="text-[10px] text-slate-400">يمكنك إرفاق صورة الإيصال لتسريع عملية التفعيل.</p>
                 </div>
                 <button onclick="submitSubscriptionRequest()" class="w-full bg-gradient-to-r from-amber-500 to-yellow-600 text-white font-bold py-3 rounded-xl shadow-lg hover:scale-[1.02] transition-all">
-                    <i class="fa-solid fa-paper-plane"></i> إرسال طلب التفعيل
+                    <i class="fa-solid fa-paper-plane"></i> إرسال طلب التفعيل عبر واتساب
                 </button>
-                <p class="text-[10px] text-slate-400 text-center">سيتم تفعيل الحساب خلال 24 ساعة بعد تأكيد الدفع.</p>
+                <p class="text-[10px] text-slate-400 text-center">ملاحظة: سيتم تفعيل الترقية يدوياً من قبل الإدارة بعد التحقق من الحوالة.</p>
             </div>
         </div>
     </div>
@@ -661,7 +661,6 @@
                 if (!adminSnap.exists()) {
                     const initialAdminHash = hashPassword("admin123");
                     await setDoc(adminConfigRef, { password: initialAdminHash });
-                    console.log("✅ تم تهيئة كلمة سر المدير: admin123");
                 }
             } catch (error) {
                 console.error("خطأ في تهيئة كلمة سر المدير:", error);
@@ -681,11 +680,6 @@
                         "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%230B192C'><rect width='100' height='100' rx='20'/><path d='M25 50 Q50 80 75 50' stroke='%2310B981' stroke-width='6' fill='none' stroke-linecap='round'/><path d='M65 20 Q70 30 80 35 Q70 40 65 50 Q60 40 50 35 Q60 30 65 20' fill='%23D4AF37'/></svg>",
                         "sizes": "192x192",
                         "type": "image/svg+xml"
-                    },
-                    {
-                        "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%230B192C'><rect width='100' height='100' rx='20'/><path d='M25 50 Q50 80 75 50' stroke='%2310B981' stroke-width='6' fill='none' stroke-linecap='round'/><path d='M65 20 Q70 30 80 35 Q70 40 65 50 Q60 40 50 35 Q60 30 65 20' fill='%23D4AF37'/></svg>",
-                        "sizes": "512x512",
-                        "type": "image/svg+xml"
                     }
                 ]
             };
@@ -696,11 +690,7 @@
             linkTag.href = manifestURL;
             document.head.appendChild(linkTag);
             if ('serviceWorker' in navigator) {
-                const swCode = `
-                    self.addEventListener('install', (e) => self.skipWaiting());
-                    self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
-                    self.addEventListener('fetch', (e) => { });
-                `;
+                const swCode = `self.addEventListener('install', (e) => self.skipWaiting()); self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim())); self.addEventListener('fetch', (e) => { });`;
                 const swBlob = new Blob([swCode], {type: 'application/javascript'});
                 const swBlobURL = URL.createObjectURL(swBlob);
                 navigator.serviceWorker.register(swBlobURL, { scope: './' }).catch(() => {});
@@ -757,13 +747,11 @@
                     name, phone, role,
                     password: securePasswordHash,
                     status: "قيد الانتظار",
-                    quotaLimit: 3,
-                    casesUsed: 0,
-                    subscriptionType: "مجاني",
+                    subscriptionType: "free",
                     subscriptionExpiry: null,
                     subscriptionRequests: []
                 });
-                alert("✅ تم التسجيل بنجاح! لديك 3 تحليلات مجانية للتجربة.");
+                alert("✅ تم التسجيل بنجاح! لديك تحليلين (2) مجاناً يومياً للتجربة.");
                 document.getElementById('regDocName').value = "";
                 document.getElementById('regDocPhone').value = "";
                 document.getElementById('regDocRole').value = "";
@@ -786,7 +774,7 @@
                 const doctorData = docSnap.data();
                 const inputPasswordHash = hashPassword(password);
                 if(doctorData.password !== inputPasswordHash) { 
-                    alert("❌ الرمز السري غير صحيح. تأكد من كتابته بشكل صحيح."); 
+                    alert("❌ الرمز السري غير صحيح."); 
                     return; 
                 }
                 if(doctorData.status === 'قيد الانتظار') {
@@ -875,8 +863,7 @@
                 requestDate: new Date().toISOString(),
                 status: "قيد الانتظار",
                 receiptImage: receiptData,
-                plan: "مدفوع (6 أشهر - 50 تحليلاً)",
-                amount: "10$",
+                plan: "طلب ترقية اشتراك",
                 processed: false
             };
             try {
@@ -890,7 +877,7 @@
                     requests.push({ date: new Date().toISOString(), status: "قيد الانتظار" });
                     await updateDoc(dentistRef, { subscriptionRequests: requests });
                 }
-                alert("✅ تم إرسال طلب الاشتراك المدفوع بنجاح! سيتم مراجعته وتفعيله خلال 24 ساعة.");
+                alert("✅ تم إرسال طلب الاشتراك بنجاح! سيتم مراجعته وتفعيله من قبل الإدارة بعد التحقق من الحوالة.");
                 closeSubscriptionModal();
                 document.getElementById('paymentReceiptInput').value = "";
                 await loadPendingSubscriptionRequests();
@@ -927,7 +914,7 @@
                             <div class="text-xs">
                                 <span class="font-bold text-slate-800">📞 ${req.doctorPhone}</span>
                                 <span class="block text-[10px] text-slate-500">${new Date(req.requestDate).toLocaleDateString('ar-EG')}</span>
-                                <span class="inline-block mt-1 bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-[10px] font-bold">${req.plan || 'مدفوع'}</span>
+                                <span class="inline-block mt-1 bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-[10px] font-bold">${req.plan || 'ترقية'}</span>
                                 ${req.receiptImage ? `<span class="inline-block mt-1 bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px]"><i class="fa-solid fa-image"></i> مع إيصال</span>` : ''}
                             </div>
                             <div class="flex gap-1">
@@ -953,15 +940,13 @@
                 const expiryDate = new Date();
                 expiryDate.setMonth(expiryDate.getMonth() + 6);
                 await updateDoc(dentistRef, {
-                    subscriptionType: "مدفوع",
+                    subscriptionType: "6months",
                     subscriptionExpiry: expiryDate.toISOString(),
-                    quotaLimit: 50,
-                    casesUsed: 0,
                     status: "نشط"
                 });
                 const reqRef = doc(db, "subscription_requests", requestId);
                 await updateDoc(reqRef, { status: "تم التفعيل" });
-                alert(`✅ تم تفعيل الاشتراك المدفوع للطبيب ${doctorPhone} بنجاح لمدة 6 أشهر (50 تحليلاً).`);
+                alert(`✅ تم تفعيل الاشتراك (6 أشهر - 20 تحليل يومياً) للطبيب ${doctorPhone} بنجاح.`);
                 await loadPendingSubscriptionRequests();
                 pullDentistsListToAdminTable();
             } catch (error) {
@@ -980,6 +965,27 @@
             } catch (error) {
                 console.error("Rejection error:", error);
                 alert("فشل رفض الطلب.");
+            }
+        }
+
+        window.updateDoctorSubscriptionType = async function(doctorPhone, newType) {
+            try {
+                const dentistRef = doc(db, "dentists", doctorPhone);
+                let expiryDate = null;
+                if (newType === '6months' || newType === '1year') {
+                    const d = new Date();
+                    d.setMonth(d.getMonth() + (newType === '6months' ? 6 : 12));
+                    expiryDate = d.toISOString();
+                }
+                await updateDoc(dentistRef, {
+                    subscriptionType: newType,
+                    subscriptionExpiry: expiryDate,
+                    status: "نشط"
+                });
+                // تحديث الواجهة فوراً
+                pullDentistsListToAdminTable();
+            } catch (error) {
+                alert("فشل تحديث الاشتراك: " + error.message);
             }
         }
         
@@ -1003,23 +1009,28 @@
                     } else {
                         statusBadge = `<span class="bg-slate-100 text-slate-600 border border-slate-200 px-1.5 py-0.5 rounded text-[10px] font-bold">انتظار</span>`;
                     }
-                    const subType = dentist.subscriptionType || 'مجاني';
-                    const subExpiry = dentist.subscriptionExpiry ? new Date(dentist.subscriptionExpiry).toLocaleDateString('ar-EG') : '--';
-                    const subBadge = subType === 'مدفوع' 
-                        ? `<span class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded text-[10px] font-bold"><i class="fa-solid fa-crown"></i> مدفوع (حتى ${subExpiry})</span>`
-                        : `<span class="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded text-[10px] font-bold">مجاني (${dentist.quotaLimit || 3} تحليل)</span>`;
+                    
+                    const subType = dentist.subscriptionType || 'free';
+                    let subLabel = "مجاني (2 يومياً)";
+                    let subClass = "bg-slate-100 text-slate-600";
+                    if (subType === '6months') { subLabel = "6 أشهر (20 يومياً)"; subClass = "bg-amber-100 text-amber-800"; }
+                    else if (subType === '1year') { subLabel = "سنة كاملة (25 يومياً)"; subClass = "bg-emerald-100 text-emerald-800"; }
+
                     const tr = document.createElement('tr');
                     tr.className = "hover:bg-slate-50 transition-colors";
                     tr.innerHTML = `
                         <td class="p-2 border-b border-slate-100">
                             <div class="font-bold text-slate-800 text-xs">${dentist.name}</div>
                             <div class="text-[10px] text-slate-400">${dentist.role || 'طبيب'} | هاتف: ${dentist.phone}</div>
-                            <button onclick="openResetPassword('dentist'); document.getElementById('resetPhoneInput').value='${dentist.phone}';" class="forgot-btn" style="font-size:10px;text-align:right;margin-top:2px;display:inline-block;width:auto;"><i class="fa-solid fa-key"></i> إعادة تعيين كلمة السر</button>
+                            <button onclick="openResetPassword('dentist'); document.getElementById('resetPhoneInput').value='${dentist.phone}';" class="forgot-btn" style="font-size:10px;text-align:right;margin-top:2px;display:inline-block;width:auto;"><i class="fa-solid fa-key"></i> إعادة تعيين</button>
                         </td>
                         <td class="p-2 border-b border-slate-100 text-center">${statusBadge}</td>
                         <td class="p-2 border-b border-slate-100 text-center">
-                            ${subBadge}
-                            <div class="text-[9px] text-slate-400 mt-1">مستخدم: ${dentist.casesUsed || 0}</div>
+                            <select onchange="updateDoctorSubscriptionType('${dentist.phone}', this.value)" class="w-full text-[10px] font-bold p-1 rounded border border-slate-200 bg-white focus:outline-none focus:border-amber-500 ${subClass}">
+                                <option value="free" ${subType === 'free' ? 'selected' : ''}>مجاني (2 يومياً)</option>
+                                <option value="6months" ${subType === '6months' ? 'selected' : ''}>6 أشهر (20 يومياً)</option>
+                                <option value="1year" ${subType === '1year' ? 'selected' : ''}>سنة كاملة (25 يومياً)</option>
+                            </select>
                         </td>
                         <td class="p-2 border-b border-slate-100 text-left space-x-1 space-x-reverse">
                             <button onclick="changeDoctorStatusCloud('${dentistId}', 'نشط')" class="bg-emerald-600 text-white text-[10px] py-1 px-1.5 rounded font-bold">تفعيل</button>
@@ -1042,11 +1053,8 @@
         window.changeDoctorStatusCloud = async function(dentistId, newStatus) {
             try {
                 const docRef = doc(db, "dentists", dentistId);
-                const docSnap = await getDoc(docRef);
-                if(docSnap.exists()){
-                    await updateDoc(docRef, { status: newStatus });
-                    await pullDentistsListToAdminTable();
-                }
+                await updateDoc(docRef, { status: newStatus });
+                await pullDentistsListToAdminTable();
             } catch (error) {
                 alert("فشل تعديل حالة الحساب: " + error.message);
             }
@@ -1113,9 +1121,26 @@
                 const docSnap = await getDoc(docRef);
                 if(docSnap.exists()) {
                     const data = docSnap.data();
-                    const limit = data.quotaLimit || 0;
-                    const used = data.casesUsed || 0;
-                    const remaining = Math.max(0, limit - used);
+                    const today = new Date().toDateString();
+                    
+                    // تحديد الحد اليومي بناءً على نوع الاشتراك
+                    let dailyLimit = 2;
+                    let subText = "مجاني (2 تحليل يومياً)";
+                    let subClass = "text-amber-600";
+                    
+                    if (data.subscriptionType === '6months') {
+                        dailyLimit = 20;
+                        subText = "6 أشهر (20 تحليل يومياً)";
+                        subClass = "text-emerald-600";
+                    } else if (data.subscriptionType === '1year') {
+                        dailyLimit = 25;
+                        subText = "سنة كاملة (25 تحليل يومياً)";
+                        subClass = "text-emerald-600";
+                    }
+                    
+                    const usedToday = data.usedQuota?.[today] || 0;
+                    const remaining = Math.max(0, dailyLimit - usedToday);
+                    
                     const quotaBadge = document.getElementById('quotaDisplayBadge');
                     const remainingSpan = document.getElementById('remainingQuotaCount');
                     if(quotaBadge) quotaBadge.classList.remove('hidden');
@@ -1123,22 +1148,24 @@
                         remainingSpan.innerText = remaining;
                         remainingSpan.className = remaining === 0 ? "text-rose-500 font-bold" : "text-amber-400 font-bold";
                     }
-                    const subType = data.subscriptionType || 'مجاني';
-                    const subExpiry = data.subscriptionExpiry ? new Date(data.subscriptionExpiry).toLocaleDateString('ar-EG') : '--';
+                    
                     const statusText = document.getElementById('subscriptionStatusText');
                     const expiryBadge = document.getElementById('subscriptionExpiryBadge');
                     const expiryDateSpan = document.getElementById('subscriptionExpiryDate');
-                    if(subType === 'مدفوع') {
-                        statusText.innerText = `مدفوع (50 تحليلاً - ينتهي ${subExpiry})`;
-                        statusText.className = "font-bold text-emerald-600";
+                    
+                    if(statusText) {
+                        statusText.innerText = subText;
+                        statusText.className = `font-bold ${subClass}`;
+                    }
+                    
+                    if(data.subscriptionType !== 'free' && data.subscriptionExpiry) {
                         if(expiryBadge) expiryBadge.classList.remove('hidden');
-                        if(expiryDateSpan) expiryDateSpan.innerText = subExpiry;
+                        if(expiryDateSpan) expiryDateSpan.innerText = new Date(data.subscriptionExpiry).toLocaleDateString('ar-EG');
                     } else {
-                        statusText.innerText = `مجاني (${limit} تحليلات)`;
-                        statusText.className = "font-bold text-amber-600";
                         if(expiryBadge) expiryBadge.classList.add('hidden');
                     }
                 }
+                
                 const q = query(collection(db, "cases"), where("doctorPhone", "==", currentLoggedDoctorPhone));
                 const querySnapshot = await getDocs(q);
                 let totalCases = 0;
@@ -1302,7 +1329,6 @@
             btn.classList.add('opacity-50', 'cursor-not-allowed');
         }
 
-        // آلية التدوير الثلاثية والمحاولة المتكررة للاتصال بـ API
         async function fetchGeminiAnalysisWithFallback(promptText, base64Img) {
             let keysToTry = [...rotatedApiKeysList];
             if(activeGeminiApiKey && !keysToTry.includes(activeGeminiApiKey)) {
@@ -1347,29 +1373,33 @@
                     const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
                     if (!jsonText) throw new Error("استجابة غير صالحة من الذكاء الاصطناعي.");
                     
-                    return JSON.parse(jsonText); // نجاح الاتصال!
+                    return JSON.parse(jsonText);
                 } catch (err) {
                     console.warn(`فشل المفتاح رقم ${i + 1}: ${err.message}`);
                     lastError = err;
                 }
             }
-            throw new Error(`تعذر الاتصال بجميع مفاتيح Gemini الثلاثة. الخطأ الأخير: ${lastError?.message || 'غير معروف'}`);
+            throw new Error(`تعذر الاتصال بجميع مفاتيح Gemini. الخطأ الأخير: ${lastError?.message || 'غير معروف'}`);
         }
 
         window.runSmileAnalysis = async function() {
             if(!base64ImageString) { alert("يرجى اختيار صورة أولاً."); return; }
             if(!currentLoggedDoctorPhone) { alert("يرجى تسجيل الدخول أولاً."); return; }
 
-            // التحقق من الحصة والرصيد
             try {
                 const dentistRef = doc(db, "dentists", currentLoggedDoctorPhone);
                 const dentistSnap = await getDoc(dentistRef);
                 if(!dentistSnap.exists()) return;
                 const dentistData = dentistSnap.data();
-                const limit = dentistData.quotaLimit || 0;
-                const used = dentistData.casesUsed || 0;
-                if(used >= limit) {
-                    alert("⚠️ لقد استنفدت رصيد التحليلات المتاحة في حسابك. يرجى طلب تمديد الاشتراك.");
+                const today = new Date().toDateString();
+                
+                let dailyLimit = 2;
+                if (dentistData.subscriptionType === '6months') dailyLimit = 20;
+                else if (dentistData.subscriptionType === '1year') dailyLimit = 25;
+                
+                const usedToday = dentistData.usedQuota?.[today] || 0;
+                if(usedToday >= dailyLimit) {
+                    alert(`⚠️ لقد استنفدت رصيدك اليومي (${dailyLimit} تحليل). يرجى الانتظار حتى غد أو ترقية اشتراكك.`);
                     openSubscriptionRequest();
                     return;
                 }
@@ -1431,11 +1461,15 @@
 
                 const patientIdentifier = document.getElementById('patientIdentifierInput').value.trim() || "مريض غير مسمى";
                 
-                // حفظ الحالة في السحابة وتحديث الاستهلاك
                 const dentistRef = doc(db, "dentists", currentLoggedDoctorPhone);
                 const dentistSnap = await getDoc(dentistRef);
-                const currentUsed = (dentistSnap.data()?.casesUsed || 0) + 1;
-                await updateDoc(dentistRef, { casesUsed: currentUsed });
+                const today = new Date().toDateString();
+                const currentUsedToday = (dentistSnap.data()?.usedQuota?.[today] || 0) + 1;
+                
+                await updateDoc(dentistRef, { 
+                    [`usedQuota.${today}`]: currentUsedToday,
+                    lastResetDate: today
+                });
 
                 const newCaseRef = doc(collection(db, "cases"));
                 await setDoc(newCaseRef, {
@@ -1483,7 +1517,6 @@
             document.getElementById('badgeAlignment').innerText = (data.scores?.alignment || 0) + "/10";
             document.getElementById('badgeGingival').innerText = (data.scores?.gingival || 0) + "/10";
 
-            // جدول المقارنة
             const tableBody = document.getElementById('treatmentComparisonTableBody');
             tableBody.innerHTML = "";
             (data.treatmentComparison || []).forEach(item => {
@@ -1498,21 +1531,18 @@
                 tableBody.appendChild(tr);
             });
 
-            // الملاحظات
             const findingsList = document.getElementById('findingsList');
             findingsList.innerHTML = "";
             (data.findings || []).forEach(f => {
                 findingsList.innerHTML += `<li class="flex items-center gap-1.5"><i class="fa-solid fa-circle-dot text-mint-cyan text-[8px]"></i> ${f}</li>`;
             });
 
-            // الحلول
             const treatmentsList = document.getElementById('treatmentsList');
             treatmentsList.innerHTML = "";
             (data.treatments || []).forEach(t => {
                 treatmentsList.innerHTML += `<span class="bg-teal-50 text-teal-800 border border-teal-200 px-2.5 py-1 rounded-lg text-xs font-bold">${t}</span>`;
             });
 
-            // الخطة الزمنية
             const timeline = document.getElementById('actionPlanTimeline');
             timeline.innerHTML = "";
             (data.timeline || []).forEach(tl => {
@@ -1525,7 +1555,6 @@
                 `;
             });
 
-            // النصائح
             const tipsList = document.getElementById('tipsList');
             tipsList.innerHTML = "";
             (data.tips || []).forEach(tip => {
