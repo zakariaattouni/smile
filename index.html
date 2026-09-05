@@ -611,7 +611,7 @@
                 if(!docSnap.exists()) { alert("❌ لا يوجد حساب بهذا الرقم."); return; }
                 const doctorData = docSnap.data();
                 if(doctorData.password !== hashPassword(password)) { alert("❌ الرمز السري غير صحيح."); return; }
-                if(doctorData.status === 'قيد الانتظار') { alert("⏳ حسابك قيد المراجعة."); return; }
+                if(doctorData.status === 'قيد الانتظار') { alert(" حسابك قيد المراجعة."); return; }
                 if(doctorData.status === 'موقوف') { alert("⛔ الحساب موقوف."); return; }
                 
                 currentLoggedDoctorPhone = phone;
@@ -1008,39 +1008,53 @@
             btn.disabled = true; btn.classList.add('opacity-50', 'cursor-not-allowed');
         }
 
-        // آلية التدوير للمفاتيح الحديثة
+        // آلية التدوير للمفاتيح الحديثة مع نماذج Gemini المتعددة
         async function fetchGeminiAnalysisWithFallback(promptText, base64Img) {
             let keysToTry = [...rotatedApiKeysList];
             if(activeGeminiApiKey && !keysToTry.includes(activeGeminiApiKey)) keysToTry.unshift(activeGeminiApiKey);
             if(keysToTry.length === 0) throw new Error("لا يوجد مفتاح API. يرجى إضافته من لوحة الإدارة.");
 
+            // قائمة النماذج الحديثة المدعومة (بدلاً من gemini-1.5-flash المتوقف)
+            const modelsToTry = [
+                "gemini-2.5-pro",
+                "gemini-2.0-flash",
+                "gemini-1.5-pro"
+            ];
+
             let lastError = null;
+            
+            // نجرب كل مفتاح مع كل نموذج
             for (let i = 0; i < keysToTry.length; i++) {
                 const currentKey = keysToTry[i];
-                // استخدام نموذج gemini-1.5-pro للحصول على تحليل طبي أعمق وأدق، أو fallback لـ flash
-                const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${currentKey}`;
                 
-                const requestPayload = {
-                    contents: [{ parts: [{ text: promptText }, { inline_data: { mime_type: "image/jpeg", data: base64Img } }] }],
-                    generationConfig: { temperature: 0.1, response_mime_type: "application/json" }
-                };
+                for (let j = 0; j < modelsToTry.length; j++) {
+                    const currentModel = modelsToTry[j];
+                    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${currentKey}`;
+                    
+                    const requestPayload = {
+                        contents: [{ parts: [{ text: promptText }, { inline_data: { mime_type: "image/jpeg", data: base64Img } }] }],
+                        generationConfig: { temperature: 0.1, response_mime_type: "application/json" }
+                    };
 
-                try {
-                    const response = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(requestPayload) });
-                    if (!response.ok) {
-                        const errData = await response.json().catch(() => ({}));
-                        throw new Error(errData.error?.message || `HTTP ${response.status}`);
+                    try {
+                        console.log(`محاولة الاتصال بالمفتاح ${i + 1} والنموذج ${currentModel}...`);
+                        const response = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(requestPayload) });
+                        if (!response.ok) {
+                            const errData = await response.json().catch(() => ({}));
+                            throw new Error(errData.error?.message || `HTTP ${response.status}`);
+                        }
+                        const data = await response.json();
+                        const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                        if (!jsonText) throw new Error("استجابة غير صالحة.");
+                        console.log(`نجح الاتصال باستخدام ${currentModel}`);
+                        return JSON.parse(jsonText);
+                    } catch (err) {
+                        console.warn(`فشل المفتاح ${i + 1} مع ${currentModel}: ${err.message}`);
+                        lastError = err;
                     }
-                    const data = await response.json();
-                    const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                    if (!jsonText) throw new Error("استجابة غير صالحة.");
-                    return JSON.parse(jsonText);
-                } catch (err) {
-                    console.warn(`فشل المفتاح ${i + 1}: ${err.message}`);
-                    lastError = err;
                 }
             }
-            throw new Error(`تعذر الاتصال. الخطأ الأخير: ${lastError?.message || 'غير معروف'}`);
+            throw new Error(`تعذر الاتصال بجميع مفاتيح ونماذج Gemini. الخطأ الأخير: ${lastError?.message || 'غير معروف'}`);
         }
 
         window.runSmileAnalysis = async function() {
@@ -1114,7 +1128,7 @@
                     doctorPhone: currentLoggedDoctorPhone,
                     patientIdentifier: patientIdentifier,
                     date: new Date().toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' }),
-                    overallScore: analysisResult.macroAnalysis ? 8.5 : 8.0, // Fallback score logic
+                    overallScore: analysisResult.macroAnalysis ? 8.5 : 8.0,
                     image: base64ImageString,
                     analysisData: analysisResult,
                     timestamp: Date.now()
@@ -1148,27 +1162,22 @@
             document.getElementById('clinicalSummary').innerText = data.clinicalSummary || "";
             document.getElementById('patientExplanationText').innerText = data.patientExplanation || "";
 
-            // Render Macro
             const macroList = document.getElementById('macroAnalysisList');
             macroList.innerHTML = "";
             (data.macroAnalysis || []).forEach(item => { macroList.innerHTML += `<li class="flex items-start gap-1.5"><i class="fa-solid fa-check text-sky-500 text-[10px] mt-1"></i> <span>${item}</span></li>`; });
 
-            // Render Micro
             const microList = document.getElementById('microAnalysisList');
             microList.innerHTML = "";
             (data.microAnalysis || []).forEach(item => { microList.innerHTML += `<li class="flex items-start gap-1.5"><i class="fa-solid fa-check text-amber-500 text-[10px] mt-1"></i> <span>${item}</span></li>`; });
 
-            // Render Gingival
             const gingivalList = document.getElementById('gingivalAnalysisList');
             gingivalList.innerHTML = "";
             (data.gingivalAnalysis || []).forEach(item => { gingivalList.innerHTML += `<li class="flex items-start gap-1.5"><i class="fa-solid fa-check text-rose-500 text-[10px] mt-1"></i> <span>${item}</span></li>`; });
 
-            // Findings
             const findingsList = document.getElementById('findingsList');
             findingsList.innerHTML = "";
             (data.findings || []).forEach(f => { findingsList.innerHTML += `<li class="flex items-center gap-1.5"><i class="fa-solid fa-circle-dot text-mint-cyan text-[8px]"></i> ${f}</li>`; });
 
-            // Treatment Plan
             const treatmentPlanList = document.getElementById('treatmentPlanList');
             treatmentPlanList.innerHTML = "";
             (data.treatmentPlan || []).forEach(plan => {
@@ -1180,7 +1189,6 @@
                 `;
             });
 
-            // Tips
             const tipsList = document.getElementById('tipsList');
             tipsList.innerHTML = "";
             (data.tips || []).forEach(tip => { tipsList.innerHTML += `<li class="flex items-center gap-1.5"><i class="fa-solid fa-check text-emerald-500 text-xs"></i> ${tip}</li>`; });
