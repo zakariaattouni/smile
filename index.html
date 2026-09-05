@@ -515,7 +515,7 @@
                 }
                 if (!phone) { alert("❌ يرجى إدخال رقم هاتف الطبيب"); return; }
                 const docRef = doc(db, "dentists", phone);
-                if (!(await getDoc(docRef)).exists()) { alert("❌ لا يوجد حساب بهذا الرقم"); return; }
+                if (!(await getDoc(docRef)).exists()) { alert(" لا يوجد حساب بهذا الرقم"); return; }
                 await updateDoc(docRef, { password: hashPassword(newPassword) });
                 alert(`✅ تم إعادة تعيين كلمة سر الطبيب ${phone} إلى: ${newPassword}`);
                 closeResetModal();
@@ -609,7 +609,7 @@
                 if(!docSnap.exists()) { alert("❌ لا يوجد حساب بهذا الرقم."); return; }
                 const doctorData = docSnap.data();
                 if(doctorData.password !== hashPassword(password)) { alert("❌ الرمز السري غير صحيح."); return; }
-                if(doctorData.status === 'قيد الانتظار') { alert("⏳ حسابك قيد المراجعة."); return; }
+                if(doctorData.status === 'قيد الانتظار') { alert(" حسابك قيد المراجعة."); return; }
                 if(doctorData.status === 'موقوف') { alert("⛔ الحساب موقوف."); return; }
                 
                 currentLoggedDoctorPhone = phone;
@@ -1006,17 +1006,18 @@
             btn.disabled = true; btn.classList.add('opacity-50', 'cursor-not-allowed');
         }
 
-        // ✅ آلية التدوير باستخدام النماذج المستقرة التي تعمل فعلاً (نفس نماذج سيما الناجحة)
+        // ✅ آلية التدوير باستخدام النماذج الحديثة المتاحة (2026)
         async function fetchGeminiAnalysisWithFallback(promptText, base64Img) {
             let keysToTry = [...rotatedApiKeysList];
             if(activeGeminiApiKey && !keysToTry.includes(activeGeminiApiKey)) keysToTry.unshift(activeGeminiApiKey);
             if(keysToTry.length === 0) throw new Error("لا يوجد مفتاح API. يرجى إضافته من لوحة الإدارة.");
 
-            // النماذج المستقرة والمدعومة رسمياً (نفس النماذج التي تعمل في تطبيق سيما)
+            // النماذج الحديثة المتاحة والمستقرة (2026) - تم استبدال النماذج المتوقفة
             const modelsToTry = [
-                "gemini-2.5-flash",
-                "gemini-2.5-pro",
-                "gemini-2.5-flash-lite"
+                "gemini-3.7-flash",
+                "gemini-3.6-flash",
+                "gemini-3.5-flash",
+                "gemini-2.5-pro"
             ];
 
             let lastError = null;
