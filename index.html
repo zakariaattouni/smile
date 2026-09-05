@@ -11,6 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
     <style>
         body { font-family: 'Cairo', sans-serif; background-color: #F8FAFC; }
         .bg-royal-navy { background-color: #0B192C; }
@@ -45,6 +46,85 @@
             box-shadow: 0 6px 16px rgba(37, 211, 102, 0.4);
         }
         .whatsapp-bar i { font-size: 22px; }
+        .forgot-btn {
+            background: transparent;
+            color: #10B981;
+            border: none;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: underline;
+            margin-top: 4px;
+            display: block;
+            width: 100%;
+            text-align: center;
+        }
+        .forgot-btn:hover { color: #059669; }
+        .reset-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 999;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .reset-modal.show { display: flex; }
+        .reset-modal-content {
+            background: white;
+            border-radius: 24px;
+            padding: 24px;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .reset-modal-content h3 {
+            font-size: 18px;
+            font-weight: 800;
+            color: #0B192C;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+        .reset-modal-content input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #E5E7EB;
+            border-radius: 12px;
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 12px;
+            font-family: 'Cairo', sans-serif;
+        }
+        .reset-modal-content input:focus {
+            outline: none;
+            border-color: #10B981;
+        }
+        .reset-modal-content .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+        .reset-modal-content .btn-group button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Cairo', sans-serif;
+        }
+        .btn-reset-confirm {
+            background: #10B981;
+            color: white;
+        }
+        .btn-reset-confirm:hover { background: #059669; }
+        .btn-reset-cancel {
+            background: #F3F4F6;
+            color: #4B5563;
+        }
+        .btn-reset-cancel:hover { background: #E5E7EB; }
     </style>
 </head>
 <body class="text-slate-800 min-h-screen flex flex-col justify-between pb-20 md:pb-0">
@@ -72,7 +152,6 @@
         </div>
     </header>
     <main class="max-w-4xl w-full mx-auto px-4 py-6 flex-grow">
-        <!-- Auth Portal -->
         <section id="portal-auth" class="max-w-md mx-auto space-y-5">
             <a href="https://wa.me/963939436998" target="_blank" class="whatsapp-bar">
                 <i class="fa-brands fa-whatsapp"></i>
@@ -84,7 +163,6 @@
                 <button onclick="switchAuthTab('login-patient')" id="tab-login-patient" class="py-2 rounded-lg text-slate-700">بوابة المريض</button>
                 <button onclick="switchAuthTab('login-admin')" id="tab-login-admin" class="py-2 rounded-lg text-slate-700">الإدارة</button>
             </div>
-            <!-- Login Dentist -->
             <div id="form-login-dentist" class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-3">
                 <h3 class="text-sm font-bold text-royal-navy text-center"><i class="fa-solid fa-lock-open text-mint-cyan"></i> تسجيل دخول الأطباء المشتركين</h3>
                 <div class="space-y-2">
@@ -93,9 +171,9 @@
                     <label class="text-[11px] font-bold text-slate-500 block">كلمة السر</label>
                     <input type="password" id="loginDocPass" placeholder="******" class="w-full p-2.5 border border-slate-200 rounded-xl text-center focus:outline-none">
                     <button onclick="processDoctorLogin()" class="w-full bg-royal-navy text-white text-xs font-bold py-3 rounded-xl shadow-md">دخول لعيادة الفحص</button>
+                    <button onclick="openResetPassword('dentist')" class="forgot-btn"><i class="fa-solid fa-key"></i> نسيت كلمة السر؟</button>
                 </div>
             </div>
-            <!-- Register Dentist -->
             <div id="form-register-dentist" class="hidden bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-3">
                 <h3 class="text-sm font-bold text-emerald-700 text-center"><i class="fa-solid fa-user-plus"></i> فتح حساب عيادة جديد</h3>
                 <div class="space-y-2">
@@ -110,7 +188,6 @@
                     <button onclick="processDoctorRegistration()" class="w-full bg-emerald-600 text-white text-xs font-bold py-3 rounded-xl shadow-md">إرسال طلب التسجيل السحابي</button>
                 </div>
             </div>
-            <!-- Login Patient -->
             <div id="form-login-patient" class="hidden bg-white p-5 rounded-2xl shadow-sm border border-slate-100 text-center space-y-3">
                 <i class="fa-solid fa-qrcode text-3xl text-slate-300"></i>
                 <div>
@@ -126,18 +203,17 @@
                     <p class="text-[11px] text-indigo-900 leading-relaxed">أهلاً بك يا فندم، مظهر ابتسامتك العام متناسق وجميل جداً. ينصح طبيبك المعالج بإجراء تبييض ليزري دوري للحفاظ على نصوع وبياض الأسنان الساحر.</p>
                 </div>
             </div>
-            <!-- Login Admin -->
-            <div id="form-login-admin" class="hidden bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-3">
+            <div id="form-login-admin" class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-3">
                 <h3 class="text-sm font-bold text-amber-600 text-center"><i class="fa-solid fa-user-gear"></i> لوحة تحكم المدير العام</h3>
                 <div class="space-y-2">
                     <label class="text-[11px] font-bold text-slate-500 block">كلمة السر الخاصة بالإدارة</label>
                     <input type="password" id="adminSystemPass" placeholder="******" class="w-full p-2.5 border border-slate-200 rounded-xl text-center focus:outline-none">
                     <button onclick="processAdminLogin()" class="w-full bg-amber-600 text-white text-xs font-bold py-3 rounded-xl shadow-md">دخول لغرفة الإدارة</button>
+                    <button onclick="openResetPassword('admin')" class="forgot-btn"><i class="fa-solid fa-key"></i> نسيت كلمة السر؟</button>
                 </div>
             </div>
         </section>
         
-        <!-- Dentist Portal -->
         <section id="portal-dentist" class="hidden space-y-5">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div class="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3">
@@ -170,7 +246,6 @@
                 </div>
             </div>
             
-            <!-- Subscription Status & Upgrade Button -->
             <div id="subscriptionStatusBar" class="bg-slate-800/10 border border-slate-200 rounded-xl p-3 flex flex-wrap items-center justify-between gap-2 text-xs">
                 <div class="flex items-center gap-2">
                     <i class="fa-solid fa-crown text-amber-500"></i>
@@ -333,9 +408,7 @@
             </div>
         </section>
         
-        <!-- Admin Portal -->
         <section id="portal-admin" class="hidden space-y-5">
-            <!-- طلبات الاشتراك المدفوع -->
             <div class="bg-gradient-to-br from-amber-50 to-yellow-50 border border-amber-200 rounded-2xl p-5 shadow-sm">
                 <h3 class="text-sm font-bold text-amber-800 flex items-center gap-2 mb-3">
                     <i class="fa-solid fa-envelope text-amber-600"></i> طلبات الاشتراك المدفوع (بإنتظار المراجعة)
@@ -396,7 +469,21 @@
         </section>
     </main>
     
-    <!-- Subscription Request Modal -->
+    <!-- Reset Password Modal -->
+    <div id="resetModal" class="reset-modal">
+        <div class="reset-modal-content">
+            <h3><i class="fa-solid fa-key text-mint-cyan"></i> إعادة تعيين كلمة السر</h3>
+            <p style="text-align:center;font-size:13px;color:#6B7280;margin-bottom:16px;">أدخل رقم الهاتف (للأطباء) أو اتركه فارغاً (للمدير)</p>
+            <input type="tel" id="resetPhoneInput" placeholder="رقم الهاتف (للأطباء)" style="direction:ltr;text-align:center;">
+            <input type="password" id="resetNewPassword" placeholder="كلمة السر الجديدة" style="direction:ltr;text-align:center;" value="123456">
+            <div class="btn-group">
+                <button onclick="confirmResetPassword()" class="btn-reset-confirm"><i class="fa-solid fa-check"></i> تأكيد</button>
+                <button onclick="closeResetModal()" class="btn-reset-cancel"><i class="fa-solid fa-xmark"></i> إلغاء</button>
+            </div>
+            <p style="text-align:center;font-size:11px;color:#9CA3AF;margin-top:12px;">كلمة السر الافتراضية: 123456</p>
+        </div>
+    </div>
+    
     <div id="subscriptionModal" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-slate-100 pb-3 mb-4">
@@ -465,6 +552,8 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, doc, getDoc, setDoc, collection, getDocs, deleteDoc, query, where, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         
+        const CryptoJS = window.CryptoJS;
+        
         const firebaseConfig = {
             apiKey: "AIzaSyDpHJujTAwyWT_MyyBlIeYW_e536C3BwLc",
             authDomain: "smile-ai-397b5.firebaseapp.com",
@@ -483,14 +572,63 @@
         let deferredPrompt = null;
         let currentLoggedDoctorPhone = "";
         let currentLoadedArchiveCases = [];
+        let resetType = "admin";
         
-        async function hashPassword(password) {
-            const encoder = new TextEncoder();
-            const data = encoder.encode(password);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-            return hashHex;
+        function hashPassword(password) {
+            const salt = "SmileAI_2026_Secure";
+            return CryptoJS.SHA256(salt + password + salt).toString();
+        }
+        
+        window.openResetPassword = function(type) {
+            resetType = type;
+            document.getElementById('resetModal').classList.add('show');
+            if (type === 'admin') {
+                document.getElementById('resetPhoneInput').placeholder = "اتركه فارغاً (للمدير)";
+            } else {
+                document.getElementById('resetPhoneInput').placeholder = "أدخل رقم هاتف الطبيب";
+            }
+        }
+        
+        window.closeResetModal = function() {
+            document.getElementById('resetModal').classList.remove('show');
+        }
+        
+        window.confirmResetPassword = async function() {
+            const newPassword = document.getElementById('resetNewPassword').value.trim() || "123456";
+            const phone = document.getElementById('resetPhoneInput').value.trim();
+            
+            try {
+                if (resetType === 'admin') {
+                    // إعادة تعيين كلمة سر المدير
+                    const adminConfigRef = doc(db, "config", "admin_settings");
+                    const newHash = hashPassword(newPassword);
+                    await setDoc(adminConfigRef, { password: newHash });
+                    alert(`✅ تم إعادة تعيين كلمة سر المدير إلى: ${newPassword}`);
+                    closeResetModal();
+                    return;
+                }
+                
+                // إعادة تعيين كلمة سر طبيب
+                if (!phone) {
+                    alert("❌ يرجى إدخال رقم هاتف الطبيب");
+                    return;
+                }
+                
+                const docRef = doc(db, "dentists", phone);
+                const docSnap = await getDoc(docRef);
+                if (!docSnap.exists()) {
+                    alert("❌ لا يوجد حساب بهذا الرقم");
+                    return;
+                }
+                
+                const newHash = hashPassword(newPassword);
+                await updateDoc(docRef, { password: newHash });
+                alert(`✅ تم إعادة تعيين كلمة سر الطبيب ${phone} إلى: ${newPassword}`);
+                closeResetModal();
+                
+            } catch (error) {
+                alert("❌ فشل إعادة التعيين: " + error.message);
+            }
         }
         
         window.addEventListener('DOMContentLoaded', async function() {
@@ -503,7 +641,22 @@
             checkSavedSession();
             detectPWAInstallationCapability();
             await loadPendingSubscriptionRequests();
+            await initAdminPassword();
         });
+        
+        async function initAdminPassword() {
+            try {
+                const adminConfigRef = doc(db, "config", "admin_settings");
+                const adminSnap = await getDoc(adminConfigRef);
+                if (!adminSnap.exists()) {
+                    const initialAdminHash = hashPassword("admin123");
+                    await setDoc(adminConfigRef, { password: initialAdminHash });
+                    console.log("✅ تم تهيئة كلمة سر المدير: admin123");
+                }
+            } catch (error) {
+                console.error("خطأ في تهيئة كلمة سر المدير:", error);
+            }
+        }
         
         function injectDynamicPWAManifestAndWorker() {
             const manifestData = {
@@ -589,7 +742,7 @@
                 const docRef = doc(db, "dentists", phone);
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) { alert("رقم الهاتف هذا مسجل بالفعل."); return; }
-                const securePasswordHash = await hashPassword(password);
+                const securePasswordHash = hashPassword(password);
                 await setDoc(docRef, {
                     name, phone, role,
                     password: securePasswordHash,
@@ -600,7 +753,7 @@
                     subscriptionExpiry: null,
                     subscriptionRequests: []
                 });
-                alert("تم التسجيل بنجاح! لديك 3 تحليلات مجانية للتجربة.");
+                alert("✅ تم التسجيل بنجاح! لديك 3 تحليلات مجانية للتجربة.");
                 document.getElementById('regDocName').value = "";
                 document.getElementById('regDocPhone').value = "";
                 document.getElementById('regDocRole').value = "";
@@ -619,15 +772,18 @@
             try {
                 const docRef = doc(db, "dentists", phone);
                 const docSnap = await getDoc(docRef);
-                if(!docSnap.exists()) { alert("لا يوجد حساب مسجل برقم هذا الهاتف."); return; }
+                if(!docSnap.exists()) { alert("❌ لا يوجد حساب مسجل برقم هذا الهاتف."); return; }
                 const doctorData = docSnap.data();
-                const inputPasswordHash = await hashPassword(password);
-                if(doctorData.password !== inputPasswordHash) { alert("الرمز السري غير صحيح."); return; }
+                const inputPasswordHash = hashPassword(password);
+                if(doctorData.password !== inputPasswordHash) { 
+                    alert("❌ الرمز السري غير صحيح. تأكد من كتابته بشكل صحيح."); 
+                    return; 
+                }
                 if(doctorData.status === 'قيد الانتظار') {
-                    alert("حسابك قيد المراجعة. سيتم تفعيله قريباً.");
+                    alert("⏳ حسابك قيد المراجعة. سيتم تفعيله قريباً.");
                     return;
                 } else if(doctorData.status === 'موقوف') {
-                    alert("الحساب موقوف حالياً، يرجى التواصل مع الإدارة.");
+                    alert("⛔ الحساب موقوف حالياً، يرجى التواصل مع الإدارة.");
                     return;
                 }
                 currentLoggedDoctorPhone = phone;
@@ -651,13 +807,12 @@
                 const adminConfigRef = doc(db, "config", "admin_settings");
                 const adminSnap = await getDoc(adminConfigRef);
                 if (!adminSnap.exists()) {
-                    const initialAdminHash = await hashPassword("salem1959");
-                    await setDoc(adminConfigRef, { password: initialAdminHash });
-                    alert("تم تهيئة وثيقة الحماية. يرجى إعادة الضغط على زر الدخول.");
+                    await initAdminPassword();
+                    alert("تم تهيئة كلمة سر المدير. جرب مرة أخرى بكلمة السر: admin123");
                     return;
                 }
                 const storedAdminHash = adminSnap.data().password;
-                const inputAdminHash = await hashPassword(pass);
+                const inputAdminHash = hashPassword(pass);
                 if(inputAdminHash === storedAdminHash) {
                     localStorage.setItem('smile_ai_session', JSON.stringify({ type: 'admin' }));
                     document.getElementById('portal-auth').classList.add('hidden');
@@ -668,7 +823,7 @@
                     pullDentistsListToAdminTable();
                     loadPendingSubscriptionRequests();
                 } else {
-                    alert("الرمز السري للمدير غير صحيح!");
+                    alert("❌ الرمز السري للمدير غير صحيح!");
                 }
             } catch (error) {
                 console.error("Admin Auth Error:", error);
@@ -686,7 +841,6 @@
             resetUploadArea();
         }
         
-        // Subscription Functions
         window.openSubscriptionRequest = function() {
             document.getElementById('subscriptionModal').classList.remove('hidden');
         }
@@ -697,7 +851,6 @@
         
         window.submitSubscriptionRequest = async function() {
             if(!currentLoggedDoctorPhone) { alert("يرجى تسجيل الدخول أولاً."); return; }
-            
             const receiptFile = document.getElementById('paymentReceiptInput').files[0];
             let receiptData = null;
             if(receiptFile) {
@@ -707,7 +860,6 @@
                     reader.readAsDataURL(receiptFile);
                 });
             }
-            
             const requestData = {
                 doctorPhone: currentLoggedDoctorPhone,
                 requestDate: new Date().toISOString(),
@@ -717,11 +869,9 @@
                 amount: "10$",
                 processed: false
             };
-            
             try {
                 const reqRef = doc(db, "subscription_requests", currentLoggedDoctorPhone + "_" + Date.now());
                 await setDoc(reqRef, requestData);
-                
                 const dentistRef = doc(db, "dentists", currentLoggedDoctorPhone);
                 const dentistSnap = await getDoc(dentistRef);
                 if(dentistSnap.exists()) {
@@ -730,7 +880,6 @@
                     requests.push({ date: new Date().toISOString(), status: "قيد الانتظار" });
                     await updateDoc(dentistRef, { subscriptionRequests: requests });
                 }
-                
                 alert("✅ تم إرسال طلب الاشتراك المدفوع بنجاح! سيتم مراجعته وتفعيله خلال 24 ساعة.");
                 closeSubscriptionModal();
                 document.getElementById('paymentReceiptInput').value = "";
@@ -751,18 +900,14 @@
                         pending.push({ id: docSnap.id, ...data });
                     }
                 });
-                
                 const badge = document.getElementById('pendingRequestsBadge');
                 if(badge) badge.innerText = pending.length;
-                
                 const container = document.getElementById('pendingRequestsContainer');
                 if(!container) return;
-                
                 if(pending.length === 0) {
                     container.innerHTML = `<p class="text-xs text-amber-600/70 text-center py-4">✅ لا توجد طلبات جديدة بانتظار المراجعة.</p>`;
                     return;
                 }
-                
                 container.innerHTML = "";
                 pending.forEach((req) => {
                     const div = document.createElement('div');
@@ -795,10 +940,8 @@
                 const dentistRef = doc(db, "dentists", doctorPhone);
                 const dentistSnap = await getDoc(dentistRef);
                 if(!dentistSnap.exists()) { alert("الطبيب غير موجود."); return; }
-                
                 const expiryDate = new Date();
                 expiryDate.setMonth(expiryDate.getMonth() + 6);
-                
                 await updateDoc(dentistRef, {
                     subscriptionType: "مدفوع",
                     subscriptionExpiry: expiryDate.toISOString(),
@@ -806,10 +949,8 @@
                     casesUsed: 0,
                     status: "نشط"
                 });
-                
                 const reqRef = doc(db, "subscription_requests", requestId);
                 await updateDoc(reqRef, { status: "تم التفعيل" });
-                
                 alert(`✅ تم تفعيل الاشتراك المدفوع للطبيب ${doctorPhone} بنجاح لمدة 6 أشهر (50 تحليلاً).`);
                 await loadPendingSubscriptionRequests();
                 pullDentistsListToAdminTable();
@@ -832,7 +973,6 @@
             }
         }
         
-        // Admin Dentist Management
         async function pullDentistsListToAdminTable() {
             const tbody = document.getElementById('dentistsTableBody');
             if(!tbody) return;
@@ -853,19 +993,18 @@
                     } else {
                         statusBadge = `<span class="bg-slate-100 text-slate-600 border border-slate-200 px-1.5 py-0.5 rounded text-[10px] font-bold">انتظار</span>`;
                     }
-                    
                     const subType = dentist.subscriptionType || 'مجاني';
                     const subExpiry = dentist.subscriptionExpiry ? new Date(dentist.subscriptionExpiry).toLocaleDateString('ar-EG') : '--';
                     const subBadge = subType === 'مدفوع' 
                         ? `<span class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded text-[10px] font-bold"><i class="fa-solid fa-crown"></i> مدفوع (حتى ${subExpiry})</span>`
                         : `<span class="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded text-[10px] font-bold">مجاني (${dentist.quotaLimit || 3} تحليل)</span>`;
-                    
                     const tr = document.createElement('tr');
                     tr.className = "hover:bg-slate-50 transition-colors";
                     tr.innerHTML = `
                         <td class="p-2 border-b border-slate-100">
                             <div class="font-bold text-slate-800 text-xs">${dentist.name}</div>
                             <div class="text-[10px] text-slate-400">${dentist.role || 'طبيب'} | هاتف: ${dentist.phone}</div>
+                            <button onclick="openResetPassword('dentist'); document.getElementById('resetPhoneInput').value='${dentist.phone}';" class="forgot-btn" style="font-size:10px;text-align:right;margin-top:2px;display:inline-block;width:auto;"><i class="fa-solid fa-key"></i> إعادة تعيين كلمة السر</button>
                         </td>
                         <td class="p-2 border-b border-slate-100 text-center">${statusBadge}</td>
                         <td class="p-2 border-b border-slate-100 text-center">
@@ -914,7 +1053,6 @@
             }
         }
         
-        // Gemini Keys
         async function pullGeminiKeyFromFirebase() {
             try {
                 const docRef = doc(db, "config", "gemini_settings");
@@ -958,7 +1096,6 @@
             }
         }
         
-        // Doctor Dashboard
         async function updateDoctorDashboardAndArchive() {
             if(!currentLoggedDoctorPhone) return;
             try {
@@ -976,13 +1113,11 @@
                         remainingSpan.innerText = remaining;
                         remainingSpan.className = remaining === 0 ? "text-rose-500 font-bold" : "text-amber-400 font-bold";
                     }
-                    
                     const subType = data.subscriptionType || 'مجاني';
                     const subExpiry = data.subscriptionExpiry ? new Date(data.subscriptionExpiry).toLocaleDateString('ar-EG') : '--';
                     const statusText = document.getElementById('subscriptionStatusText');
                     const expiryBadge = document.getElementById('subscriptionExpiryBadge');
                     const expiryDateSpan = document.getElementById('subscriptionExpiryDate');
-                    
                     if(subType === 'مدفوع') {
                         statusText.innerText = `مدفوع (50 تحليلاً - ينتهي ${subExpiry})`;
                         statusText.className = "font-bold text-emerald-600";
@@ -994,7 +1129,6 @@
                         if(expiryBadge) expiryBadge.classList.add('hidden');
                     }
                 }
-                
                 const q = query(collection(db, "cases"), where("doctorPhone", "==", currentLoggedDoctorPhone));
                 const querySnapshot = await getDocs(q);
                 let totalCases = 0;
@@ -1139,7 +1273,6 @@
         
         window.runSmileAnalysis = async function() {
             if(!currentLoggedDoctorPhone) { alert("يرجى تسجيل الدخول أولاً."); return; }
-            
             const docRef = doc(db, "dentists", currentLoggedDoctorPhone);
             const docSnap = await getDoc(docRef);
             if(docSnap.exists()) {
@@ -1148,7 +1281,6 @@
                 const used = data.casesUsed || 0;
                 const subType = data.subscriptionType || 'مجاني';
                 const subExpiry = data.subscriptionExpiry ? new Date(data.subscriptionExpiry) : null;
-                
                 if(subType === 'مدفوع' && subExpiry) {
                     const now = new Date();
                     if(now > subExpiry) {
@@ -1156,7 +1288,6 @@
                         return;
                     }
                 }
-                
                 if(used >= limit) {
                     if(subType === 'مجاني') {
                         alert(`⛔ لقد استنفذت رصيدك المجاني (${limit} تحليلات). يرجى طلب الاشتراك المدفوع.`);
@@ -1167,7 +1298,6 @@
                     }
                 }
             }
-            
             let keyToUse = activeGeminiApiKey;
             if (rotatedApiKeysList && rotatedApiKeysList.length > 0) {
                 const index = Math.floor(Math.random() * rotatedApiKeysList.length);
@@ -1177,13 +1307,11 @@
                 alert('لم يتم العثور على مفتاح خادم نشط. يرجى تزويده من بوابة الإدارة.');
                 return;
             }
-            
             const btnAnalyze = document.getElementById('btnAnalyze');
             const btnSpinner = document.getElementById('btnSpinner');
             const btnBrainIcon = document.getElementById('btnBrainIcon');
             const errorMessage = document.getElementById('errorMessage');
             const resultsArea = document.getElementById('resultsArea');
-            
             btnAnalyze.disabled = true;
             if(btnSpinner) btnSpinner.classList.remove('hidden');
             if(btnBrainIcon) btnBrainIcon.classList.add('hidden');
@@ -1191,7 +1319,6 @@
             if(errorMessage) errorMessage.classList.add('hidden');
             if(resultsArea) resultsArea.classList.add('hidden');
             document.getElementById('pdfPatientLabel').classList.add('hidden');
-            
             const promptInstruction = `
             أنت خبير واستشاري عالي الكفاءة في تجميل الأسنان ومحاكاة الابتسامة الرقمية.
             مهمتك هي تحليل الصورة المرفقة من الناحية الجمالية والتناغم البصري لمظهر الأسنان واللثة.
@@ -1233,7 +1360,6 @@
               "patientExplanation": "شرح ودية ومبسطة جداً للمريض"
             }
             `;
-            
             try {
                 const compressedBase64 = await compressImage(`data:image/jpeg;base64,${base64ImageString}`);
                 const finalBase64 = compressedBase64.split(',')[1];
@@ -1254,7 +1380,6 @@
                 const resData = await response.json();
                 let responseText = resData.candidates[0].content.parts[0].text;
                 responseText = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
-                
                 const parsedResult = JSON.parse(responseText);
                 if (!parsedResult.isValidDentalImage) {
                     if(errorMessage) errorMessage.classList.remove('hidden');
@@ -1340,7 +1465,6 @@
             const tipsList = document.getElementById('tipsList');
             const treatmentComparisonTableBody = document.getElementById('treatmentComparisonTableBody');
             const resultsArea = document.getElementById('resultsArea');
-            
             const confVal = data.confidence || 0;
             if(confidencePercentText) confidencePercentText.innerText = `${confVal}%`;
             if(confidenceProgressBar) {
@@ -1352,7 +1476,6 @@
             applyDynamicCardStyle('cardColor', 'badgeColor', data.colorScore || 0);
             applyDynamicCardStyle('cardAlignment', 'badgeAlignment', data.alignmentScore || 0);
             applyDynamicCardStyle('cardGingival', 'badgeGingival', data.gingivalScore || 0);
-            
             if(clinicalSummary) clinicalSummary.innerText = data.summary || "لا يوجد ملخص متاح.";
             if(patientExplanationText) patientExplanationText.innerText = data.patientExplanation || "لا يوجد شرح مبسط متوفر.";
             if(findingsList) findingsList.innerHTML = "";
@@ -1360,7 +1483,6 @@
             if(actionPlanTimeline) actionPlanTimeline.innerHTML = "";
             if(tipsList) tipsList.innerHTML = "";
             if(treatmentComparisonTableBody) treatmentComparisonTableBody.innerHTML = "";
-            
             if (data.treatmentComparison && data.treatmentComparison.length > 0 && treatmentComparisonTableBody) {
                 data.treatmentComparison.forEach(function(row) {
                     const tr = document.createElement('tr');
@@ -1375,7 +1497,6 @@
                     treatmentComparisonTableBody.appendChild(tr);
                 });
             }
-            
             if (data.findings && data.findings.length > 0 && findingsList) {
                 data.findings.forEach(function(finding) {
                     const li = document.createElement('li');
@@ -1440,7 +1561,6 @@
             return dictionary[engText] || engText;
         }
         
-        // File upload handlers
         if(document.getElementById('dropZone')) {
             document.getElementById('dropZone').addEventListener('click', function() { document.getElementById('fileInput').click(); });
         }
@@ -1553,6 +1673,10 @@
             const patientExplainCard = document.getElementById('patientExplainCard');
             if(patientExplainCard) patientExplainCard.classList.toggle('hidden');
         }
+        
+        console.log("✅ تم تحميل Smile AI بنجاح!");
+        console.log("📌 كلمة سر المدير الافتراضية: admin123");
+        console.log("📌 استخدم زر 'نسيت كلمة السر' لإعادة التعيين");
     </script>
 </body>
 </html>
