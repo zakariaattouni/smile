@@ -11,7 +11,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
     <style>
         body { font-family: 'Cairo', sans-serif; background-color: #F8FAFC; }
         .bg-royal-navy { background-color: #0B192C; }
@@ -552,8 +551,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, doc, getDoc, setDoc, collection, getDocs, deleteDoc, query, where, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         
-        const CryptoJS = window.CryptoJS;
-        
         const firebaseConfig = {
             apiKey: "AIzaSyDpHJujTAwyWT_MyyBlIeYW_e536C3BwLc",
             authDomain: "smile-ai-397b5.firebaseapp.com",
@@ -574,9 +571,26 @@
         let currentLoadedArchiveCases = [];
         let resetType = "admin";
         
+        // دالة تشفير بسيطة وموحدة (بدون مكتبات خارجية)
+        // تستخدم تشفير بسيط لكنه ثابت ولا يتغير
         function hashPassword(password) {
-            const salt = "SmileAI_2026_Secure";
-            return CryptoJS.SHA256(salt + password + salt).toString();
+            // هذه دالة تشفير بسيطة لكنها تعطي نفس النتيجة دائماً لنفس النص
+            let hash = 0;
+            for (let i = 0; i < password.length; i++) {
+                const char = password.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash; // Convert to 32bit integer
+            }
+            // إضافة ملح ثابت لتعقيد التشفير
+            const salt = "SmileAI2026Secure";
+            const salted = salt + password + salt;
+            let finalHash = 0;
+            for (let i = 0; i < salted.length; i++) {
+                const char = salted.charCodeAt(i);
+                finalHash = ((finalHash << 5) - finalHash) + char;
+                finalHash = finalHash & finalHash;
+            }
+            return "SMILE_" + Math.abs(finalHash).toString(16).padStart(8, '0');
         }
         
         window.openResetPassword = function(type) {
@@ -599,7 +613,6 @@
             
             try {
                 if (resetType === 'admin') {
-                    // إعادة تعيين كلمة سر المدير
                     const adminConfigRef = doc(db, "config", "admin_settings");
                     const newHash = hashPassword(newPassword);
                     await setDoc(adminConfigRef, { password: newHash });
@@ -608,7 +621,6 @@
                     return;
                 }
                 
-                // إعادة تعيين كلمة سر طبيب
                 if (!phone) {
                     alert("❌ يرجى إدخال رقم هاتف الطبيب");
                     return;
