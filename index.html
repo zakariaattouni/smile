@@ -547,6 +547,7 @@
     <footer class="bg-royal-navy text-slate-400 py-4 text-center text-xs border-t border-slate-800 px-4">
         <p>حقوق التطوير و التصميم والنشر محفوظة للدكتور زكريا محمد عطوني © 2026</p>
     </footer>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, doc, getDoc, setDoc, collection, getDocs, deleteDoc, query, where, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -571,17 +572,13 @@
         let currentLoadedArchiveCases = [];
         let resetType = "admin";
         
-        // دالة تشفير بسيطة وموحدة (بدون مكتبات خارجية)
-        // تستخدم تشفير بسيط لكنه ثابت ولا يتغير
         function hashPassword(password) {
-            // هذه دالة تشفير بسيطة لكنها تعطي نفس النتيجة دائماً لنفس النص
             let hash = 0;
             for (let i = 0; i < password.length; i++) {
                 const char = password.charCodeAt(i);
                 hash = ((hash << 5) - hash) + char;
-                hash = hash & hash; // Convert to 32bit integer
+                hash = hash & hash;
             }
-            // إضافة ملح ثابت لتعقيد التشفير
             const salt = "SmileAI2026Secure";
             const salted = salt + password + salt;
             let finalHash = 0;
@@ -654,6 +651,7 @@
             detectPWAInstallationCapability();
             await loadPendingSubscriptionRequests();
             await initAdminPassword();
+            setupImageUploaderEvents();
         });
         
         async function initAdminPassword() {
@@ -1073,7 +1071,7 @@
                 if (docSnap.exists()) {
                     const data = docSnap.data();
                     activeGeminiApiKey = data.apiKey || "";
-                    rotatedApiKeysList = (data.keys_rotation || [activeGeminiApiKey]).filter(k => k.trim() !== "");
+                    rotatedApiKeysList = (data.keys_rotation || [activeGeminiApiKey]).filter(k => k && k.trim() !== "");
                     if(document.getElementById('dynamicKeyInput1')) document.getElementById('dynamicKeyInput1').value = rotatedApiKeysList[0] || activeGeminiApiKey;
                     if(document.getElementById('dynamicKeyInput2')) document.getElementById('dynamicKeyInput2').value = rotatedApiKeysList[1] || "";
                     if(document.getElementById('dynamicKeyInput3')) document.getElementById('dynamicKeyInput3').value = rotatedApiKeysList[2] || "";
@@ -1213,42 +1211,28 @@
             const found = currentLoadedArchiveCases.find(c => c.id === caseId);
             if(!found) return;
             toggleDentistWorkspace('scan');
-            const imagePreview = document.getElementById('imagePreview');
-            const previewContainer = document.getElementById('previewContainer');
-            const dropZone = document.getElementById('dropZone');
-            const btnAnalyze = document.getElementById('btnAnalyze');
             if(found.image) {
-                base64ImageString = found.image;
-                if(imagePreview) imagePreview.src = `data:image/jpeg;base64,${found.image}`;
-                if(previewContainer) previewContainer.classList.remove('hidden');
-                if(dropZone) dropZone.classList.add('hidden');
-                if(btnAnalyze) {
-                    btnAnalyze.disabled = false;
-                    btnAnalyze.classList.remove('opacity-50', 'cursor-not-allowed');
-                }
+                document.getElementById('imagePreview').src = "data:image/jpeg;base64," + found.image;
+                document.getElementById('previewContainer').classList.remove('hidden');
+                document.getElementById('dropZone').classList.add('hidden');
             }
-            document.getElementById('patientIdentifierInput').value = found.patientIdentifier || "";
-            displayAestheticResults(found.reportData);
-            if(found.patientIdentifier) {
-                document.getElementById('pdfPatientLabel').innerText = `اسم المريض / المعرف السريري: ${found.patientIdentifier}`;
-                document.getElementById('pdfPatientLabel').classList.remove('hidden');
+            if(found.analysisData) {
+                renderAnalysisResults(found.analysisData, found.patientIdentifier || "");
             }
-            alert(`تم فتح التقرير السحابي للمريض: ${found.patientIdentifier || 'غير مسمى'}.`);
         }
-        
+
         window.deleteArchivedCaseCloud = async function(caseId) {
-            if(confirm("هل أنت متأكد من حذف هذه الحالة نهائياً؟")) {
-                try {
-                    await deleteDoc(doc(db, "cases", caseId));
-                    await updateDoctorDashboardAndArchive();
-                } catch (error) {
-                    alert("فشل حذف الحالة: " + error.message);
-                }
+            if(!confirm("هل أنت متأكد من حذف هذه الحالة السريرية؟")) return;
+            try {
+                await deleteDoc(doc(db, "cases", caseId));
+                updateDoctorDashboardAndArchive();
+            } catch(e) {
+                alert("فشل حذف الحالة: " + e.message);
             }
         }
-        
-        window.toggleDentistWorkspace = function(viewMode) {
-            if(viewMode === 'scan') {
+
+        window.toggleDentistWorkspace = function(view) {
+            if(view === 'scan') {
                 document.getElementById('workspaceScanView').classList.remove('hidden');
                 document.getElementById('workspaceArchiveView').classList.add('hidden');
                 document.getElementById('tabWorkspaceScan').className = "flex-1 py-2 rounded-lg bg-royal-navy text-white text-center shadow-sm";
@@ -1258,437 +1242,352 @@
                 document.getElementById('workspaceArchiveView').classList.remove('hidden');
                 document.getElementById('tabWorkspaceScan').className = "flex-1 py-2 rounded-lg text-slate-700 text-center";
                 document.getElementById('tabWorkspaceArchive').className = "flex-1 py-2 rounded-lg bg-royal-navy text-white text-center shadow-sm";
-                updateDoctorDashboardAndArchive();
             }
         }
-        
-        function compressImage(base64Str, maxWidth = 800, quality = 0.7) {
-            return new Promise((resolve) => {
-                let img = new Image();
-                img.src = base64Str;
+
+        function setupImageUploaderEvents() {
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('fileInput');
+            dropZone.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', (e) => handleImageUpload(e.target.files[0]));
+        }
+
+        function handleImageUpload(file) {
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
                 img.onload = () => {
-                    let canvas = document.createElement('canvas');
+                    const canvas = document.createElement('canvas');
                     let width = img.width;
                     let height = img.height;
-                    if (width > maxWidth) {
-                        height *= maxWidth / width;
-                        width = maxWidth;
+                    const maxDim = 1000;
+                    if (width > maxDim || height > maxDim) {
+                        if (width > height) {
+                            height = Math.round((height * maxDim) / width);
+                            width = maxDim;
+                        } else {
+                            width = Math.round((width * maxDim) / height);
+                            height = maxDim;
+                        }
                     }
                     canvas.width = width;
                     canvas.height = height;
-                    let ctx = canvas.getContext('2d');
+                    const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
-                    resolve(canvas.toDataURL('image/jpeg', quality));
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                    base64ImageString = dataUrl.split(',')[1];
+                    document.getElementById('imagePreview').src = dataUrl;
+                    document.getElementById('previewContainer').classList.remove('hidden');
+                    document.getElementById('dropZone').classList.add('hidden');
+                    const btn = document.getElementById('btnAnalyze');
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
                 };
-            });
-        }
-        
-        window.runSmileAnalysis = async function() {
-            if(!currentLoggedDoctorPhone) { alert("يرجى تسجيل الدخول أولاً."); return; }
-            const docRef = doc(db, "dentists", currentLoggedDoctorPhone);
-            const docSnap = await getDoc(docRef);
-            if(docSnap.exists()) {
-                const data = docSnap.data();
-                const limit = data.quotaLimit || 0;
-                const used = data.casesUsed || 0;
-                const subType = data.subscriptionType || 'مجاني';
-                const subExpiry = data.subscriptionExpiry ? new Date(data.subscriptionExpiry) : null;
-                if(subType === 'مدفوع' && subExpiry) {
-                    const now = new Date();
-                    if(now > subExpiry) {
-                        alert("⛔ انتهت صلاحية الاشتراك المدفوع. يرجى تجديد الاشتراك.");
-                        return;
-                    }
-                }
-                if(used >= limit) {
-                    if(subType === 'مجاني') {
-                        alert(`⛔ لقد استنفذت رصيدك المجاني (${limit} تحليلات). يرجى طلب الاشتراك المدفوع.`);
-                        return;
-                    } else {
-                        alert(`⛔ لقد استنفذت رصيدك (${limit} تحليلات). يرجى التواصل مع الإدارة.`);
-                        return;
-                    }
-                }
-            }
-            let keyToUse = activeGeminiApiKey;
-            if (rotatedApiKeysList && rotatedApiKeysList.length > 0) {
-                const index = Math.floor(Math.random() * rotatedApiKeysList.length);
-                keyToUse = rotatedApiKeysList[index] || activeGeminiApiKey;
-            }
-            if (!keyToUse) {
-                alert('لم يتم العثور على مفتاح خادم نشط. يرجى تزويده من بوابة الإدارة.');
-                return;
-            }
-            const btnAnalyze = document.getElementById('btnAnalyze');
-            const btnSpinner = document.getElementById('btnSpinner');
-            const btnBrainIcon = document.getElementById('btnBrainIcon');
-            const errorMessage = document.getElementById('errorMessage');
-            const resultsArea = document.getElementById('resultsArea');
-            btnAnalyze.disabled = true;
-            if(btnSpinner) btnSpinner.classList.remove('hidden');
-            if(btnBrainIcon) btnBrainIcon.classList.add('hidden');
-            document.getElementById('btnText').innerText = "يقوم الذكاء الاصطناعي بتحليل الابتسامة...";
-            if(errorMessage) errorMessage.classList.add('hidden');
-            if(resultsArea) resultsArea.classList.add('hidden');
-            document.getElementById('pdfPatientLabel').classList.add('hidden');
-            const promptInstruction = `
-            أنت خبير واستشاري عالي الكفاءة في تجميل الأسنان ومحاكاة الابتسامة الرقمية.
-            مهمتك هي تحليل الصورة المرفقة من الناحية الجمالية والتناغم البصري لمظهر الأسنان واللثة.
-            قيم المعايير السريرية التالية وعزل قيمها الرياضية بدقة من 10 نقاط: (Symmetry, Color, Alignment, Gingival Display).
-            شروط حاسمة للاستجابة المرجعة:
-            - إذا كانت الصورة لا تُظهر أسناناً أو ابتسامة واضحة، اجعل "isValidDentalImage" قيمتها false.
-            - بالنسبة لحقل "recommendedTreatments" اختر فقط المناسب من: [Whitening, Composite Bonding, Orthodontics, Veneers, Crown Lengthening, Implants].
-            - العلامات يجب أن تكون أرقاماً صحيحة من 1 إلى 10.
-            - حقل "confidence" يمثل الموثوقية بالنسبة المئوية.
-            - حقل "actionPlanTimeline" يجب أن تحتوي على 4 عناصر بالترتيب الزمني.
-            أرجع النتيجة حصراً على هيئة كائن JSON منظم بالبنية التالية:
-            {
-              "isValidDentalImage": true,
-              "overallScore": 8,
-              "symmetryScore": 9,
-              "colorScore": 7,
-              "alignmentScore": 6,
-              "gingivalScore": 8,
-              "confidence": 87,
-              "summary": "ملخص شامل للحالة الجمالية",
-              "findings": ["ملاحظة عينية 1", "ملاحظة عينية 2"],
-              "recommendedTreatments": ["Whitening", "Veneers"],
-              "treatmentComparison": [
-                {
-                  "treatmentName": "عدسات الفينير التجميلية",
-                  "preservation": "تحضير بسيط (0.5 مم)",
-                  "expectedTime": "جلستان إلى 3 جلسات",
-                  "interventionLevel": "تدخل متوسط",
-                  "suitability": "ممتازة لتصحيح اللون الشديد"
-                }
-              ],
-              "actionPlanTimeline": [
-                {"session": "الجلسة الأولى", "details": "تهيئة وتجهيز اللثة"},
-                {"session": "الجلسة الثانية", "details": "البدء بالعمل التجميلي"},
-                {"session": "الجلسة الثالثة", "details": "مرحلة التطبيق المباشر"},
-                {"session": "الجلسة الرابعة", "details": "التثبيت النهائي والمتابعة"}
-              ],
-              "tips": ["نصيحة للعناية اليومية", "نصيحة لتجنب المصبغات"],
-              "patientExplanation": "شرح ودية ومبسطة جداً للمريض"
-            }
-            `;
-            try {
-                const compressedBase64 = await compressImage(`data:image/jpeg;base64,${base64ImageString}`);
-                const finalBase64 = compressedBase64.split(',')[1];
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${keyToUse}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [
-                                { text: promptInstruction },
-                                { inlineData: { mimeType: "image/jpeg", data: finalBase64 } }
-                            ]
-                        }],
-                        generationConfig: { responseMimeType: "application/json" }
-                    })
-                });
-                if (!response.ok) throw new Error('فشل اتصال الذكاء الاصطناعي.');
-                const resData = await response.json();
-                let responseText = resData.candidates[0].content.parts[0].text;
-                responseText = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
-                const parsedResult = JSON.parse(responseText);
-                if (!parsedResult.isValidDentalImage) {
-                    if(errorMessage) errorMessage.classList.remove('hidden');
-                    resetBtnStatus();
-                    return;
-                }
-                await autoSaveCaseToFirestore(parsedResult);
-                displayAestheticResults(parsedResult);
-            } catch (error) {
-                console.error(error);
-                alert('حدث عطل فني في التحليل: ' + error.message);
-                resetBtnStatus();
-            }
-        }
-        
-        async function autoSaveCaseToFirestore(reportData) {
-            if(!currentLoggedDoctorPhone) return;
-            try {
-                const identifierText = document.getElementById('patientIdentifierInput').value.trim();
-                const patientName = identifierText !== "" ? identifierText : `حالة فحص #${Math.floor(1000 + Math.random() * 9000)}`;
-                const today = new Date();
-                const dateString = today.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-                const sessionData = JSON.parse(localStorage.getItem('smile_ai_session'));
-                const docName = sessionData ? sessionData.name : "طبيب العيادة";
-                const uniqueCaseId = `${currentLoggedDoctorPhone}_${Date.now()}`;
-                await setDoc(doc(db, "cases", uniqueCaseId), {
-                    doctorPhone: currentLoggedDoctorPhone,
-                    doctorName: docName,
-                    date: dateString,
-                    patientIdentifier: patientName,
-                    overallScore: reportData.overallScore || 0,
-                    image: base64ImageString,
-                    reportData: reportData
-                });
-                const dentistRef = doc(db, "dentists", currentLoggedDoctorPhone);
-                const dentistSnap = await getDoc(dentistRef);
-                if(dentistSnap.exists()) {
-                    const data = dentistSnap.data();
-                    await updateDoc(dentistRef, { casesUsed: (data.casesUsed || 0) + 1 });
-                }
-                await updateDoctorDashboardAndArchive();
-            } catch (error) {
-                console.error("Firestore Auto-Save Error:", error);
-            }
-        }
-        
-        function resetBtnStatus() {
-            const btnAnalyze = document.getElementById('btnAnalyze');
-            const btnSpinner = document.getElementById('btnSpinner');
-            const btnBrainIcon = document.getElementById('btnBrainIcon');
-            if(btnAnalyze) btnAnalyze.disabled = false;
-            if(btnSpinner) btnSpinner.classList.add('hidden');
-            if(btnBrainIcon) btnBrainIcon.classList.remove('hidden');
-            document.getElementById('btnText').innerText = "ابدأ التحليل الفوري للابتسامة";
-        }
-        
-        function applyDynamicCardStyle(elementId, badgeId, score) {
-            const cardEl = document.getElementById(elementId);
-            const badgeEl = document.getElementById(badgeId);
-            if (!cardEl || !badgeEl) return;
-            badgeEl.innerText = `${score}/10`;
-            cardEl.className = "p-3 rounded-xl border shadow-sm flex flex-col justify-between items-center transition-all duration-300";
-            if (score >= 8) {
-                cardEl.classList.add('bg-emerald-50', 'border-emerald-200');
-                badgeEl.className = "font-black text-base text-emerald-700";
-            } else if (score >= 5) {
-                cardEl.classList.add('bg-amber-50', 'border-amber-200');
-                badgeEl.className = "font-black text-base text-amber-700";
-            } else {
-                cardEl.classList.add('bg-rose-50', 'border-rose-200');
-                badgeEl.className = "font-black text-base text-rose-700";
-            }
-        }
-        
-        function displayAestheticResults(data) {
-            const confidencePercentText = document.getElementById('confidencePercentText');
-            const confidenceProgressBar = document.getElementById('confidenceProgressBar');
-            const clinicalSummary = document.getElementById('clinicalSummary');
-            const patientExplanationText = document.getElementById('patientExplanationText');
-            const findingsList = document.getElementById('findingsList');
-            const treatmentsList = document.getElementById('treatmentsList');
-            const actionPlanTimeline = document.getElementById('actionPlanTimeline');
-            const tipsList = document.getElementById('tipsList');
-            const treatmentComparisonTableBody = document.getElementById('treatmentComparisonTableBody');
-            const resultsArea = document.getElementById('resultsArea');
-            const confVal = data.confidence || 0;
-            if(confidencePercentText) confidencePercentText.innerText = `${confVal}%`;
-            if(confidenceProgressBar) {
-                confidenceProgressBar.style.width = `0%`;
-                setTimeout(() => { confidenceProgressBar.style.width = `${confVal}%`; }, 100);
-            }
-            applyDynamicCardStyle('cardOverall', 'badgeOverall', data.overallScore || 0);
-            applyDynamicCardStyle('cardSymmetry', 'badgeSymmetry', data.symmetryScore || 0);
-            applyDynamicCardStyle('cardColor', 'badgeColor', data.colorScore || 0);
-            applyDynamicCardStyle('cardAlignment', 'badgeAlignment', data.alignmentScore || 0);
-            applyDynamicCardStyle('cardGingival', 'badgeGingival', data.gingivalScore || 0);
-            if(clinicalSummary) clinicalSummary.innerText = data.summary || "لا يوجد ملخص متاح.";
-            if(patientExplanationText) patientExplanationText.innerText = data.patientExplanation || "لا يوجد شرح مبسط متوفر.";
-            if(findingsList) findingsList.innerHTML = "";
-            if(treatmentsList) treatmentsList.innerHTML = "";
-            if(actionPlanTimeline) actionPlanTimeline.innerHTML = "";
-            if(tipsList) tipsList.innerHTML = "";
-            if(treatmentComparisonTableBody) treatmentComparisonTableBody.innerHTML = "";
-            if (data.treatmentComparison && data.treatmentComparison.length > 0 && treatmentComparisonTableBody) {
-                data.treatmentComparison.forEach(function(row) {
-                    const tr = document.createElement('tr');
-                    tr.className = "hover:bg-slate-100 transition-colors text-slate-700 font-medium";
-                    tr.innerHTML = `
-                        <td class="p-2.5 font-bold text-royal-navy border-b border-slate-200/60">${row.treatmentName}</td>
-                        <td class="p-2.5 text-emerald-700 border-b border-slate-200/60"><i class="fa-solid fa-leaf text-[10px] ml-1"></i> ${row.preservation}</td>
-                        <td class="p-2.5 font-mono border-b border-slate-200/60">${row.expectedTime}</td>
-                        <td class="p-2.5 border-b border-slate-200/60"><span class="bg-slate-200 text-slate-800 px-1.5 py-0.5 rounded text-[10px] font-bold">${row.interventionLevel}</span></td>
-                        <td class="p-2.5 text-indigo-900 border-b border-slate-200/60 text-[11px] leading-relaxed">${row.suitability}</td>
-                    `;
-                    treatmentComparisonTableBody.appendChild(tr);
-                });
-            }
-            if (data.findings && data.findings.length > 0 && findingsList) {
-                data.findings.forEach(function(finding) {
-                    const li = document.createElement('li');
-                    li.className = "bg-slate-50 border-r-4 border-royal-navy p-2 rounded-l-md flex items-start gap-1.5 shadow-sm";
-                    li.innerHTML = `<i class="fa-solid fa-square-check text-mint-cyan mt-1 text-[10px]"></i> <span>${finding}</span>`;
-                    findingsList.appendChild(li);
-                });
-            }
-            if (data.recommendedTreatments && data.recommendedTreatments.length > 0 && treatmentsList) {
-                data.recommendedTreatments.forEach(function(treatment) {
-                    const badge = document.createElement('span');
-                    badge.className = "bg-slate-900 text-white border border-slate-800 px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1 shadow-sm";
-                    badge.innerHTML = `<i class="fa-solid fa-notes-medical text-gold-accent"></i> ${translateTreatmentText(treatment)}`;
-                    treatmentsList.appendChild(badge);
-                });
-            }
-            if (data.actionPlanTimeline && data.actionPlanTimeline.length > 0 && actionPlanTimeline) {
-                data.actionPlanTimeline.forEach(function(item) {
-                    const stepDiv = document.createElement('div');
-                    stepDiv.className = "relative pr-7";
-                    stepDiv.innerHTML = `
-                        <div class="absolute right-0 top-0.5 bg-royal-navy text-gold-accent border-2 border-white rounded-full w-7 h-7 flex items-center justify-center shadow-md z-10">
-                            <i class="fa-solid fa-calendar-check text-[10px]"></i>
-                        </div>
-                        <div class="bg-slate-50 border border-slate-100 p-3 rounded-xl shadow-sm">
-                            <span class="text-xs font-black text-royal-navy block mb-0.5"><i class="fa-solid fa-circle-play text-mint-cyan text-[10px] ml-1"></i> ${item.session}</span>
-                            <p class="text-xs text-slate-600 leading-relaxed">${item.details}</p>
-                        </div>
-                    `;
-                    actionPlanTimeline.appendChild(stepDiv);
-                });
-            }
-            if (data.tips && data.tips.length > 0 && tipsList) {
-                data.tips.forEach(function(tip) {
-                    const li = document.createElement('li');
-                    li.className = "flex items-start gap-2 p-1.5 bg-amber-50/40 rounded-lg mb-1 last:mb-0 text-slate-800";
-                    li.innerHTML = `<i class="fa-solid fa-lightbulb text-amber-500 mt-1 text-xs"></i> <span>${tip}</span>`;
-                    tipsList.appendChild(li);
-                });
-            }
-            const nameInput = document.getElementById('patientIdentifierInput').value.trim();
-            if(nameInput !== "") {
-                document.getElementById('pdfPatientLabel').innerText = `اسم المريض / المعرف السريري: ${nameInput}`;
-                document.getElementById('pdfPatientLabel').classList.remove('hidden');
-            }
-            if(resultsArea) {
-                resultsArea.classList.remove('hidden');
-                resetBtnStatus();
-                resultsArea.scrollIntoView({ behavior: 'smooth' });
-            }
-        }
-        
-        function translateTreatmentText(engText) {
-            const dictionary = {
-                'Whitening': 'تبييض الأسنان (Whitening)',
-                'Composite Bonding': 'الترميم التجميلي المباشر (Composite Bonding)',
-                'Orthodontics': 'تقويم الأسنان (Orthodontics)',
-                'Veneers': 'عدسات الفينير التجميلية (Veneers)',
-                'Crown Lengthening': 'تطويل التيجان واللثة (Crown Lengthening)',
-                'Implants': 'زراعة وتعويض الأسنان (Implants)'
-            };
-            return dictionary[engText] || engText;
-        }
-        
-        if(document.getElementById('dropZone')) {
-            document.getElementById('dropZone').addEventListener('click', function() { document.getElementById('fileInput').click(); });
-        }
-        if(document.getElementById('fileInput')) {
-            document.getElementById('fileInput').addEventListener('change', function(e) { if (e.target.files.length > 0) handleFile(e.target.files[0]); });
-        }
-        
-        function handleFile(file) {
-            if (!file.type.startsWith('image/')) { alert('يرجى اختيار ملف صورة.'); return; }
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                base64ImageString = e.target.result.split(',')[1];
-                const imagePreview = document.getElementById('imagePreview');
-                const previewContainer = document.getElementById('previewContainer');
-                const dropZone = document.getElementById('dropZone');
-                const btnAnalyze = document.getElementById('btnAnalyze');
-                if(imagePreview) imagePreview.src = e.target.result;
-                if(previewContainer) previewContainer.classList.remove('hidden');
-                if(dropZone) dropZone.classList.add('hidden');
-                if(btnAnalyze) {
-                    btnAnalyze.disabled = false;
-                    btnAnalyze.classList.remove('opacity-50', 'cursor-not-allowed');
-                }
-                document.getElementById('errorMessage').classList.add('hidden');
+                img.src = e.target.result;
             };
             reader.readAsDataURL(file);
         }
-        
+
         window.resetUploadArea = function() {
-            const fileInput = document.getElementById('fileInput');
-            const previewContainer = document.getElementById('previewContainer');
-            const imagePreview = document.getElementById('imagePreview');
-            const dropZone = document.getElementById('dropZone');
-            const btnAnalyze = document.getElementById('btnAnalyze');
-            if(fileInput) fileInput.value = "";
             base64ImageString = "";
-            if(previewContainer) previewContainer.classList.add('hidden');
-            if(imagePreview) imagePreview.src = "";
-            if(dropZone) dropZone.classList.remove('hidden');
-            if(btnAnalyze) {
-                btnAnalyze.disabled = true;
-                btnAnalyze.classList.add('opacity-50', 'cursor-not-allowed');
-            }
-            document.getElementById('errorMessage').classList.add('hidden');
+            document.getElementById('fileInput').value = "";
+            document.getElementById('imagePreview').src = "";
+            document.getElementById('previewContainer').classList.add('hidden');
+            document.getElementById('dropZone').classList.remove('hidden');
             document.getElementById('resultsArea').classList.add('hidden');
-            document.getElementById('patientExplainCard').classList.add('hidden');
-            document.getElementById('doctorManualNotes').value = "";
-            document.getElementById('patientIdentifierInput').value = "";
-            document.getElementById('pdfPatientLabel').classList.add('hidden');
-            document.getElementById('confidenceProgressBar').style.width = `0%`;
-            document.getElementById('confidencePercentText').innerText = "0%";
+            document.getElementById('errorMessage').classList.add('hidden');
+            const btn = document.getElementById('btnAnalyze');
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
         }
-        
+
+        // آلية التدوير الثلاثية والمحاولة المتكررة للاتصال بـ API
+        async function fetchGeminiAnalysisWithFallback(promptText, base64Img) {
+            let keysToTry = [...rotatedApiKeysList];
+            if(activeGeminiApiKey && !keysToTry.includes(activeGeminiApiKey)) {
+                keysToTry.unshift(activeGeminiApiKey);
+            }
+            if(keysToTry.length === 0) {
+                throw new Error("لا يوجد مفتاح API مخزن في النظام. يرجى توفير مفاتيح Gemini من لوحة الإدارة.");
+            }
+
+            let lastError = null;
+            for (let i = 0; i < keysToTry.length; i++) {
+                const currentKey = keysToTry[i];
+                const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${currentKey}`;
+                
+                const requestPayload = {
+                    contents: [{
+                        parts: [
+                            { text: promptText },
+                            { inline_data: { mime_type: "image/jpeg", data: base64Img } }
+                        ]
+                    }],
+                    generationConfig: {
+                        temperature: 0.2,
+                        response_mime_type: "application/json"
+                    }
+                };
+
+                try {
+                    console.log(`محاولة الاتصال بالذكاء الاصطناعي بواسطة المفتاح رقم ${i + 1}...`);
+                    const response = await fetch(endpoint, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(requestPayload)
+                    });
+
+                    if (!response.ok) {
+                        const errData = await response.json().catch(() => ({}));
+                        throw new Error(errData.error?.message || `HTTP error! status: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (!jsonText) throw new Error("استجابة غير صالحة من الذكاء الاصطناعي.");
+                    
+                    return JSON.parse(jsonText); // نجاح الاتصال!
+                } catch (err) {
+                    console.warn(`فشل المفتاح رقم ${i + 1}: ${err.message}`);
+                    lastError = err;
+                }
+            }
+            throw new Error(`تعذر الاتصال بجميع مفاتيح Gemini الثلاثة. الخطأ الأخير: ${lastError?.message || 'غير معروف'}`);
+        }
+
+        window.runSmileAnalysis = async function() {
+            if(!base64ImageString) { alert("يرجى اختيار صورة أولاً."); return; }
+            if(!currentLoggedDoctorPhone) { alert("يرجى تسجيل الدخول أولاً."); return; }
+
+            // التحقق من الحصة والرصيد
+            try {
+                const dentistRef = doc(db, "dentists", currentLoggedDoctorPhone);
+                const dentistSnap = await getDoc(dentistRef);
+                if(!dentistSnap.exists()) return;
+                const dentistData = dentistSnap.data();
+                const limit = dentistData.quotaLimit || 0;
+                const used = dentistData.casesUsed || 0;
+                if(used >= limit) {
+                    alert("⚠️ لقد استنفدت رصيد التحليلات المتاحة في حسابك. يرجى طلب تمديد الاشتراك.");
+                    openSubscriptionRequest();
+                    return;
+                }
+            } catch(e) {
+                console.error("Quota check error:", e);
+            }
+
+            const btn = document.getElementById('btnAnalyze');
+            const spinner = document.getElementById('btnSpinner');
+            const brainIcon = document.getElementById('btnBrainIcon');
+            const btnText = document.getElementById('btnText');
+            
+            btn.disabled = true;
+            spinner.classList.remove('hidden');
+            brainIcon.classList.add('hidden');
+            btnText.innerText = "جاري التحليل التجميلي عبر Gemini AI...";
+            document.getElementById('errorMessage').classList.add('hidden');
+
+            const analysisPrompt = `
+انت استشاري تجميل أسنان ورقمي خبير. قم بتحليل صورة الابتسامة المرفقة بشكل دقيق، ثم أرجع JSON باللغة العربية بالهيكل التالي فقط دون أي نصوص إضافية:
+{
+  "isTeethVisible": true,
+  "confidenceScore": 92,
+  "scores": {
+    "overall": 8.5,
+    "symmetry": 8.0,
+    "color": 7.5,
+    "alignment": 8.5,
+    "gingival": 9.0
+  },
+  "summary": "ملخص تشخيصي عالي الدقة لوضع الابتسامة التجميلي الحالي...",
+  "findings": ["ملاحظة 1", "ملاحظة 2", "ملاحظة 3"],
+  "treatments": ["علاج مقترح 1", "علاج مقترح 2"],
+  "treatmentComparison": [
+    {
+      "name": "تبييض بالليزر",
+      "conservation": "عالية جداً",
+      "time": "جلسة واحدة (45 دقيقة)",
+      "invasiveness": "غير غازي",
+      "suitability": "ممتازة"
+    }
+  ],
+  "timeline": [
+    {"stage": "المرحلة الأولى", "action": "تنظيف وتبييض الأسنان"},
+    {"stage": "المرحلة الثانية", "action": "عدسات الفينير المقترحة"}
+  ],
+  "patientExplanation": "شرح لطيف ومبسط يوجه للمريض بلغة سهلة ومشجعة...",
+  "tips": ["نصيحة 1 للمحافظة على النتائج", "نصيحة 2"]
+}
+            `;
+
+            try {
+                const analysisResult = await fetchGeminiAnalysisWithFallback(analysisPrompt, base64ImageString);
+                
+                if(!analysisResult.isTeethVisible) {
+                    document.getElementById('errorMessage').classList.remove('hidden');
+                    return;
+                }
+
+                const patientIdentifier = document.getElementById('patientIdentifierInput').value.trim() || "مريض غير مسمى";
+                
+                // حفظ الحالة في السحابة وتحديث الاستهلاك
+                const dentistRef = doc(db, "dentists", currentLoggedDoctorPhone);
+                const dentistSnap = await getDoc(dentistRef);
+                const currentUsed = (dentistSnap.data()?.casesUsed || 0) + 1;
+                await updateDoc(dentistRef, { casesUsed: currentUsed });
+
+                const newCaseRef = doc(collection(db, "cases"));
+                await setDoc(newCaseRef, {
+                    doctorPhone: currentLoggedDoctorPhone,
+                    patientIdentifier: patientIdentifier,
+                    date: new Date().toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' }),
+                    overallScore: analysisResult.scores?.overall || 8.0,
+                    image: base64ImageString,
+                    analysisData: analysisResult,
+                    timestamp: Date.now()
+                });
+
+                renderAnalysisResults(analysisResult, patientIdentifier);
+                await updateDoctorDashboardAndArchive();
+
+            } catch (err) {
+                console.error("Smile AI Analysis Failure:", err);
+                alert("❌ حدث خطأ أثناء التحليل: " + err.message);
+            } finally {
+                btn.disabled = false;
+                spinner.classList.add('hidden');
+                brainIcon.classList.remove('hidden');
+                btnText.innerText = "ابدأ التحليل الفوري للابتسامة";
+            }
+        }
+
+        function renderAnalysisResults(data, patientIdentifier) {
+            document.getElementById('resultsArea').classList.remove('hidden');
+            
+            if(patientIdentifier) {
+                const pLabel = document.getElementById('pdfPatientLabel');
+                pLabel.innerText = "اسم/رقم الحالة: " + patientIdentifier;
+                pLabel.classList.remove('hidden');
+            }
+
+            document.getElementById('confidencePercentText').innerText = (data.confidenceScore || 90) + "%";
+            document.getElementById('confidenceProgressBar').style.width = (data.confidenceScore || 90) + "%";
+            
+            document.getElementById('clinicalSummary').innerText = data.summary || "";
+            document.getElementById('patientExplanationText').innerText = data.patientExplanation || "";
+
+            document.getElementById('badgeOverall').innerText = (data.scores?.overall || 0) + "/10";
+            document.getElementById('badgeSymmetry').innerText = (data.scores?.symmetry || 0) + "/10";
+            document.getElementById('badgeColor').innerText = (data.scores?.color || 0) + "/10";
+            document.getElementById('badgeAlignment').innerText = (data.scores?.alignment || 0) + "/10";
+            document.getElementById('badgeGingival').innerText = (data.scores?.gingival || 0) + "/10";
+
+            // جدول المقارنة
+            const tableBody = document.getElementById('treatmentComparisonTableBody');
+            tableBody.innerHTML = "";
+            (data.treatmentComparison || []).forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="p-2.5 font-bold text-slate-800">${item.name}</td>
+                    <td class="p-2.5 text-emerald-700">${item.conservation}</td>
+                    <td class="p-2.5 text-slate-600">${item.time}</td>
+                    <td class="p-2.5 text-slate-600">${item.invasiveness}</td>
+                    <td class="p-2.5 font-bold text-teal-700">${item.suitability}</td>
+                `;
+                tableBody.appendChild(tr);
+            });
+
+            // الملاحظات
+            const findingsList = document.getElementById('findingsList');
+            findingsList.innerHTML = "";
+            (data.findings || []).forEach(f => {
+                findingsList.innerHTML += `<li class="flex items-center gap-1.5"><i class="fa-solid fa-circle-dot text-mint-cyan text-[8px]"></i> ${f}</li>`;
+            });
+
+            // الحلول
+            const treatmentsList = document.getElementById('treatmentsList');
+            treatmentsList.innerHTML = "";
+            (data.treatments || []).forEach(t => {
+                treatmentsList.innerHTML += `<span class="bg-teal-50 text-teal-800 border border-teal-200 px-2.5 py-1 rounded-lg text-xs font-bold">${t}</span>`;
+            });
+
+            // الخطة الزمنية
+            const timeline = document.getElementById('actionPlanTimeline');
+            timeline.innerHTML = "";
+            (data.timeline || []).forEach(tl => {
+                timeline.innerHTML += `
+                    <div class="relative pr-6">
+                        <span class="absolute right-0 top-1 w-2.5 h-2.5 bg-mint-cyan rounded-full"></span>
+                        <h5 class="font-bold text-xs text-royal-navy">${tl.stage}</h5>
+                        <p class="text-[11px] text-slate-600">${tl.action}</p>
+                    </div>
+                `;
+            });
+
+            // النصائح
+            const tipsList = document.getElementById('tipsList');
+            tipsList.innerHTML = "";
+            (data.tips || []).forEach(tip => {
+                tipsList.innerHTML += `<li class="flex items-center gap-1.5"><i class="fa-solid fa-check text-emerald-500 text-xs"></i> ${tip}</li>`;
+            });
+
+            document.getElementById('resultsArea').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        window.togglePatientCard = function() {
+            const card = document.getElementById('patientExplainCard');
+            card.classList.toggle('hidden');
+        }
+
         window.downloadAestheticReportsPDF = function() {
-            const doctorManualNotes = document.getElementById('doctorManualNotes');
-            const pdfDoctorNotesText = document.getElementById('pdfDoctorNotesText');
-            const pdfDoctorNotesContainer = document.getElementById('pdfDoctorNotesContainer');
-            const manualText = doctorManualNotes ? doctorManualNotes.value.trim() : "";
-            if (manualText !== "") {
-                if(pdfDoctorNotesText) pdfDoctorNotesText.innerText = manualText;
-                if(pdfDoctorNotesContainer) pdfDoctorNotesContainer.classList.remove('hidden');
+            const notes = document.getElementById('doctorManualNotes').value.trim();
+            const pdfNotesContainer = document.getElementById('pdfDoctorNotesContainer');
+            const pdfNotesText = document.getElementById('pdfDoctorNotesText');
+
+            if(notes) {
+                pdfNotesText.innerText = notes;
+                pdfNotesContainer.classList.remove('hidden');
             } else {
-                if(pdfDoctorNotesContainer) pdfDoctorNotesContainer.classList.add('hidden');
+                pdfNotesContainer.classList.add('hidden');
             }
+
             const element = document.getElementById('pdfReportContent');
-            const options = {
-                margin: [10, 10, 10, 10],
-                filename: `Smile_AI_Report_${new Date().toISOString().slice(0,10)}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            const opt = {
+                margin:       0.3,
+                filename:     `Smile_AI_Report_${Date.now()}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
             };
-            html2pdf().set(options).from(element).save();
-            if(currentLoggedDoctorPhone) {
-                let currentPdfCount = parseInt(localStorage.getItem(`smile_ai_pdf_count_${currentLoggedDoctorPhone}`) || "0");
-                currentPdfCount++;
-                localStorage.setItem(`smile_ai_pdf_count_${currentLoggedDoctorPhone}`, currentPdfCount);
-                document.getElementById('statPdfCount').innerText = currentPdfCount;
-            }
+
+            html2pdf().set(opt).from(element).save().then(() => {
+                let currentCount = parseInt(localStorage.getItem(`smile_ai_pdf_count_${currentLoggedDoctorPhone}`) || "0");
+                currentCount++;
+                localStorage.setItem(`smile_ai_pdf_count_${currentLoggedDoctorPhone}`, currentCount.toString());
+                document.getElementById('statPdfCount').innerText = currentCount;
+            });
         }
-        
-        window.loadMockPatientReport = function() {
-            const code = document.getElementById('patientCodeInput').value.trim();
-            if (!code) { alert('يرجى إدخال رمز الحالة.'); return; }
-            document.getElementById('patientReportContainer').classList.remove('hidden');
-        }
-        
+
         function detectPWAInstallationCapability() {
             window.addEventListener('beforeinstallprompt', (e) => {
                 e.preventDefault();
                 deferredPrompt = e;
-                if(document.getElementById('pwaInstallBanner')) document.getElementById('pwaInstallBanner').classList.remove('hidden');
+                document.getElementById('pwaInstallBanner').classList.remove('hidden');
             });
         }
-        
+
         window.triggerPWAInstallation = function() {
             if (deferredPrompt) {
                 deferredPrompt.prompt();
                 deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') document.getElementById('pwaInstallBanner').classList.add('hidden');
+                    if (choiceResult.outcome === 'accepted') {
+                        document.getElementById('pwaInstallBanner').classList.add('hidden');
+                    }
                     deferredPrompt = null;
                 });
-            } else {
-                alert("لتثبيت التطبيق على الآيفون:\nاضغط على 'مشاركة' ثم 'إضافة إلى الشاشة الرئيسية'.");
-                document.getElementById('pwaInstallBanner').classList.add('hidden');
             }
         }
-        
-        window.togglePatientCard = function() {
-            const patientExplainCard = document.getElementById('patientExplainCard');
-            if(patientExplainCard) patientExplainCard.classList.toggle('hidden');
-        }
-        
-        console.log("✅ تم تحميل Smile AI بنجاح!");
-        console.log("📌 كلمة سر المدير الافتراضية: admin123");
-        console.log("📌 استخدم زر 'نسيت كلمة السر' لإعادة التعيين");
     </script>
 </body>
 </html>
