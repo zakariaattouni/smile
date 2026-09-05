@@ -233,7 +233,6 @@
                         <textarea id="doctorManualNotes" rows="2" placeholder="اكتب أي ملاحظة سريرية إضافية هنا..." class="w-full p-2.5 border border-amber-200 rounded-lg text-xs focus:outline-none bg-white"></textarea>
                     </div>
                     
-                    <!-- التقرير الطبي الموسع -->
                     <div id="pdfReportContent" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 space-y-5">
                         <div class="border-b border-slate-100 pb-3 flex justify-between items-center">
                             <div>
@@ -371,7 +370,6 @@
         </section>
     </main>
     
-    <!-- Reset Password Modal -->
     <div id="resetModal" class="reset-modal">
         <div class="reset-modal-content">
             <h3><i class="fa-solid fa-key text-mint-cyan"></i> إعادة تعيين كلمة السر</h3>
@@ -611,7 +609,7 @@
                 if(!docSnap.exists()) { alert("❌ لا يوجد حساب بهذا الرقم."); return; }
                 const doctorData = docSnap.data();
                 if(doctorData.password !== hashPassword(password)) { alert("❌ الرمز السري غير صحيح."); return; }
-                if(doctorData.status === 'قيد الانتظار') { alert(" حسابك قيد المراجعة."); return; }
+                if(doctorData.status === 'قيد الانتظار') { alert("⏳ حسابك قيد المراجعة."); return; }
                 if(doctorData.status === 'موقوف') { alert("⛔ الحساب موقوف."); return; }
                 
                 currentLoggedDoctorPhone = phone;
@@ -1008,22 +1006,21 @@
             btn.disabled = true; btn.classList.add('opacity-50', 'cursor-not-allowed');
         }
 
-        // آلية التدوير للمفاتيح الحديثة مع نماذج Gemini المتعددة
+        // ✅ آلية التدوير باستخدام النماذج المستقرة التي تعمل فعلاً (نفس نماذج سيما الناجحة)
         async function fetchGeminiAnalysisWithFallback(promptText, base64Img) {
             let keysToTry = [...rotatedApiKeysList];
             if(activeGeminiApiKey && !keysToTry.includes(activeGeminiApiKey)) keysToTry.unshift(activeGeminiApiKey);
             if(keysToTry.length === 0) throw new Error("لا يوجد مفتاح API. يرجى إضافته من لوحة الإدارة.");
 
-            // قائمة النماذج الحديثة المدعومة (بدلاً من gemini-1.5-flash المتوقف)
+            // النماذج المستقرة والمدعومة رسمياً (نفس النماذج التي تعمل في تطبيق سيما)
             const modelsToTry = [
+                "gemini-2.5-flash",
                 "gemini-2.5-pro",
-                "gemini-2.0-flash",
-                "gemini-1.5-pro"
+                "gemini-2.5-flash-lite"
             ];
 
             let lastError = null;
             
-            // نجرب كل مفتاح مع كل نموذج
             for (let i = 0; i < keysToTry.length; i++) {
                 const currentKey = keysToTry[i];
                 
@@ -1046,7 +1043,7 @@
                         const data = await response.json();
                         const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
                         if (!jsonText) throw new Error("استجابة غير صالحة.");
-                        console.log(`نجح الاتصال باستخدام ${currentModel}`);
+                        console.log(`✅ نجح الاتصال باستخدام ${currentModel}`);
                         return JSON.parse(jsonText);
                     } catch (err) {
                         console.warn(`فشل المفتاح ${i + 1} مع ${currentModel}: ${err.message}`);
@@ -1084,7 +1081,6 @@
             document.getElementById('btnText').innerText = "جاري التحليل السريري المتقدم عبر الذكاء الاصطناعي...";
             document.getElementById('errorMessage').classList.add('hidden');
 
-            // المحرك الجديد للتقرير الطبي الموسع والدقيق
             const analysisPrompt = `
 أنت استشاري أول معتمد في طب تجميل الأسنان (Prosthodontics) وخبير في تصميم الابتسامة الرقمي (Digital Smile Design - DSD).
 قم بتحليل صورة الابتسامة المرفقة بدقة سريرية عالية جداً، واستخدم المصطلحات الطبية العربية الدقيقة.
